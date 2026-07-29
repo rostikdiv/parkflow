@@ -1,3 +1,17 @@
 spring:
   application:
     name: parkflow
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}

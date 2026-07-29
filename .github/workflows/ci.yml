@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Build and Test with Maven
+      run: ./mvnw verify -B
+
+  terraform-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      
+    - name: Check Terraform formatting
+      run: |
+        if ls *.tf >/dev/null 2>&1; then
+          terraform fmt -check
+        else
+          echo "No Terraform files found, skipping."
+          exit 0
+        fi
