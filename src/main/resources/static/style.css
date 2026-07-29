@@ -227,6 +227,11 @@ body {
     background: linear-gradient(180deg, var(--bg-card) 0%, rgba(239, 68, 68, 0.05) 100%);
 }
 
+.summary-card.unknown {
+    border-color: rgba(100, 116, 139, 0.3);
+    background: linear-gradient(180deg, var(--bg-card) 0%, rgba(100, 116, 139, 0.05) 100%);
+}
+
 .summary-card .count {
     font-size: 2rem;
     font-weight: 700;
@@ -234,6 +239,7 @@ body {
 
 .summary-card.free .count { color: var(--status-free); }
 .summary-card.occupied .count { color: var(--status-occupied); }
+.summary-card.unknown .count { color: var(--status-unknown); }
 
 .summary-card .label {
     font-size: 0.75rem;

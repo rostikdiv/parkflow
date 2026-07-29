@@ -117,15 +117,20 @@ function renderSpots(spots) {
 
     let freeCount = 0;
     let occupiedCount = 0;
+    let unknownCount = 0;
 
     // Sort spots by code (A-1, A-2, etc)
     spots.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+
+    let staleCount = 0;
+    const now = new Date();
 
     spots.forEach(spot => {
         const div = document.createElement('div');
         div.className = `spot-item ${spot.physicalStatus}`;
         div.textContent = spot.code;
-        div.title = `Type: ${spot.type} | Last Update: ${new Date(spot.lastSensorUpdate).toLocaleTimeString()}`;
+        const lastUpdateText = spot.lastSensorUpdate ? new Date(spot.lastSensorUpdate).toLocaleTimeString() : 'Never';
+        div.title = `Type: ${spot.type} | Last Update: ${lastUpdateText}`;
 
         if (spot.physicalStatus === 'FREE') {
             div.addEventListener('click', () => openReservationModal(spot));
@@ -135,11 +140,27 @@ function renderSpots(spots) {
 
         if (spot.physicalStatus === 'FREE') freeCount++;
         else if (spot.physicalStatus === 'OCCUPIED') occupiedCount++;
+        else if (spot.physicalStatus === 'UNKNOWN') unknownCount++;
+        
+        if (spot.lastSensorUpdate && (now - new Date(spot.lastSensorUpdate)) > 5 * 60 * 1000) {
+            staleCount++;
+        }
     });
 
     // Update summary counts
     document.getElementById('count-free').textContent = freeCount;
     document.getElementById('count-occupied').textContent = occupiedCount;
+    document.getElementById('count-unknown').textContent = unknownCount;
+    
+    // Stale Data Warning
+    const staleWarning = document.getElementById('stale-warning');
+    if (staleWarning) {
+        if (staleCount > 0) {
+            staleWarning.classList.remove('hidden');
+        } else {
+            staleWarning.classList.add('hidden');
+        }
+    }
 }
 
 // Reservation Logic
