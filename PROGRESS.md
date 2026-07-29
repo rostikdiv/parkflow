@@ -13,7 +13,7 @@
 | M2 | ✅ Завершено | 2026-07-29 | Exclusion constraint, idempotency, reservation domain, tests |
 | M3 | ✅ Завершено | 2026-07-29 | Асинхронність, RabbitMQ, sensor-emulator |
 | M3.5 | ✅ Завершено | 2026-07-29 | Рання візуальна демонстрація (Vanilla JS, мапа, CORS) |
-| M4 | ⬜ Не почато | | |
+| M4 | ✅ Завершено | 2026-07-29 | Reconciliation + Розширений емулятор + Авто-вирішення аномалій |
 | M5 | ⬜ Не почато | | |
 | M6 | ⬜ Не почато | | |
 | M7 | ⬜ Не почато (опційно) | | |
@@ -35,4 +35,4 @@
 
 ## Наступний крок
 
-M4 — Reconciliation (Звірка сенсор↔бронь, SpotAnomaly, admin-ендпоінти, Graceful Degradation).
+M5 — Платежі + сповіщення (Mock-gateway з chaos-режимом, Resilience4j, notification-worker).
