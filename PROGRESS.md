@@ -10,7 +10,7 @@
 |---|---|---|---|
 | M0 | ✅ Завершено | 2026-07-29 | Фундамент, docker-compose, Flyway, CI skeleton, Testcontainers-конфіг |
 | M1 | ✅ Завершено | 2026-07-29 | Доменна модель, базовий CRUD, seed-дані |
-| M2 | ⬜ Не почато | | |
+| M2 | ✅ Завершено | 2026-07-29 | Exclusion constraint, idempotency, reservation domain, tests |
 | M3 | ⬜ Не почато | | |
 | M3.5 | ⬜ Не почато | | |
 | M4 | ⬜ Не почато | | |

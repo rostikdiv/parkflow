@@ -1,0 +1,10 @@
+feat(reservation): implement core booking system and concurrency control
+
+Milestone M2: Booking & Concurrency Control (Core).
+
+- Implement Reservation and ReservationAudit entities to track bookings and state transitions.
+- Build ReservationService and IdempotencyService containing the core business logic for creating and canceling reservations.
+- Introduce ReservationController exposing REST API endpoints for booking operations.
+- Enforce strict state machine transitions using a sealed interface (ReservationStatus).
+- Implement durable race-condition prevention using PostgreSQL EXCLUDE USING gist constraint on time ranges.
+- Prevent duplicate requests using Redis SETNX as a fast-fail idempotency layer.
