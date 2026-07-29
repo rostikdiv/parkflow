@@ -48,6 +48,14 @@ services:
       timeout: 5s
       retries: 5
 
+  sensor-emulator:
+    build: ./sensor-emulator
+    container_name: parkflow-sensor-emulator
+    environment:
+      API_URL: http://host.docker.internal:8080/api/internal/v1/sensor-events
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 volumes:
   postgres-data:
   redis-data:

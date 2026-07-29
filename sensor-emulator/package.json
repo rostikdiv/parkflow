@@ -1,0 +1,12 @@
+{
+  "name": "sensor-emulator",
+  "version": "1.0.0",
+  "description": "Simulates physical parking sensors for ParkFlow",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "uuid": "^9.0.1"
+  }
+}

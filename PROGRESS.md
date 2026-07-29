@@ -11,7 +11,7 @@
 | M0 | ✅ Завершено | 2026-07-29 | Фундамент, docker-compose, Flyway, CI skeleton, Testcontainers-конфіг |
 | M1 | ✅ Завершено | 2026-07-29 | Доменна модель, базовий CRUD, seed-дані |
 | M2 | ✅ Завершено | 2026-07-29 | Exclusion constraint, idempotency, reservation domain, tests |
-| M3 | ⬜ Не почато | | |
+| M3 | ✅ Завершено | 2026-07-29 | Асинхронність, RabbitMQ, sensor-emulator |
 | M3.5 | ⬜ Не почато | | |
 | M4 | ⬜ Не почато | | |
 | M5 | ⬜ Не почато | | |
@@ -35,4 +35,4 @@
 
 ## Наступний крок
 
-M1 — Домен + CRUD (сутності, Flyway-міграції з `V1__extensions.sql`, REST lots/spots, seed-дані, repository-тести).
+M3.5 — (Новий) Інтеграція Circuit Breaker / Retry для зовнішніх викликів або будь-яка інша задача, визначена планом, чи одразу перехід до M4 (Payment Flow).
