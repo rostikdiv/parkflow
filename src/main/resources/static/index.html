@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkFlow | Smart Parking Map</title>
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="app-header">
+        <div class="logo">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                <circle cx="7" cy="17" r="2"/>
+                <path d="M9 17h6"/>
+                <circle cx="17" cy="17" r="2"/>
+            </svg>
+            <h1>ParkFlow</h1>
+        </div>
+        <div class="status-indicator">
+            <span class="pulse"></span>
+            Live Updates Active
+        </div>
+    </header>
+
+    <main class="app-container">
+        <!-- Map Container -->
+        <div id="map" class="map-view"></div>
+
+        <!-- Sidebar for Selected Parking Lot -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-empty">
+                <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <p>Select a parking lot on the map to view real-time availability.</p>
+            </div>
+            
+            <div class="sidebar-content hidden" id="lot-details">
+                <div class="lot-header">
+                    <h2 id="lot-name">Parking Lot Name</h2>
+                    <p id="lot-address">123 Street Name, City</p>
+                    <div class="lot-badges">
+                        <span class="badge" id="lot-type">INDOOR</span>
+                        <span class="badge price" id="lot-price">$5/hr</span>
+                    </div>
+                </div>
+
+                <div class="spots-summary">
+                    <div class="summary-card free">
+                        <span class="count" id="count-free">0</span>
+                        <span class="label">Available</span>
+                    </div>
+                    <div class="summary-card occupied">
+                        <span class="count" id="count-occupied">0</span>
+                        <span class="label">Occupied</span>
+                    </div>
+                </div>
+
+                <div class="spots-container">
+                    <h3>Parking Spots</h3>
+                    <div class="spots-grid" id="spots-grid">
+                        <!-- Spots injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Reservation Modal -->
+        <div id="reservation-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Reserve Spot <span id="reserve-spot-code"></span></h2>
+                    <button class="close-btn" id="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="reservation-form">
+                        <input type="hidden" id="reserve-spot-id">
+                        <div class="form-group">
+                            <label for="reserve-plate">License Plate</label>
+                            <input type="text" id="reserve-plate" required placeholder="AA1234BB" pattern="^[A-Z0-9\-]{3,10}$">
+                            <small>3-10 uppercase letters or numbers</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="reserve-duration">Duration (hours)</label>
+                            <select id="reserve-duration">
+                                <option value="1">1 Hour</option>
+                                <option value="2" selected>2 Hours</option>
+                                <option value="3">3 Hours</option>
+                                <option value="4">4 Hours</option>
+                            </select>
+                        </div>
+                        <div id="reservation-error" class="error-msg hidden"></div>
+                        <button type="submit" class="btn btn-primary" id="submit-reservation">Confirm Reservation</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <!-- App JS -->
+    <script src="app.js"></script>
+</body>
+</html>
