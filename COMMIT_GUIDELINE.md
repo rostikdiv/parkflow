@@ -24,6 +24,7 @@ ParkFlow використовує **Conventional Commits 1.0** — де-факт
 | Правило | Пояснення |
 |---|---|
 | **≤ 50 символів** | GitHub/IDE обрізає довгі рядки |
+| **English only** | Усі коміти (і заголовок, і тіло) ПОВИННІ бути англійською мовою. |
 | **Не з великої літери** (крім власних назв) | `feat:` а не `Feat:` |
 | **Без крапки в кінці** | `add idempotency key` а не `add idempotency key.` |
 | **Present simple, imperative mood** | `add`, `fix`, `refactor` — наче даєш команду системі |
@@ -79,15 +80,15 @@ Scope — це **модуль** або **шар** системи. Для ParkFlo
 ```
 feat(reservation): add PostgreSQL exclusion constraint for booking
 
-Використовуємо EXCLUDE USING gist (spot_id WITH =, 
-tstzrange(start_time, end_time) WITH &&) замість @Version.
+Use EXCLUDE USING gist (spot_id WITH =, tstzrange(start_time, end_time) WITH &&) 
+instead of @Version optimistic locking.
 
-Причина: @Version серіалізує ВСІ бронювання місця, навіть 
-неперетинні за часом. Exclusion constraint відсікає тільки 
-конфліктні інтервали атомарно на рівні БД.
+Reason: @Version serializes ALL bookings for a spot, even those that 
+do not overlap in time. Exclusion constraint rejects only intersecting 
+intervals atomically at the DB level.
 
-Рівень 3 драбини рішень з parkflow_final_plan.md §4.3.
-Race-тест: 50 потоків → 1 success, 49 ConflictException.
+Level 3 of the decision ladder from parkflow_final_plan.md §4.3.
+Race-test: 50 threads → 1 success, 49 ConflictException.
 ```
 
 ### Footer (опціонально)
@@ -140,6 +141,7 @@ main (protected)
 
 ## 8. Чекліст перед `git commit`
 
+- [ ] Увесь коміт (заголовок та тіло) написаний англійською мовою?
 - [ ] Заголовок ≤ 50 символів?
 - [ ] Тип із списку вище?
 - [ ] Scope відповідає модулю ParkFlow?
