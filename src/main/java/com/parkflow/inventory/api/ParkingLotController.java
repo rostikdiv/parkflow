@@ -2,7 +2,9 @@ package com.parkflow.inventory.api;
 
 import com.parkflow.inventory.api.dto.GeoJsonFeatureCollection;
 import com.parkflow.inventory.api.dto.ParkingLotResponse;
+import com.parkflow.inventory.api.dto.SpotResponse;
 import com.parkflow.inventory.application.ParkingLotService;
+import com.parkflow.inventory.application.SpotService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,15 +25,19 @@ import java.util.UUID;
 public class ParkingLotController {
 
     private final ParkingLotService parkingLotService;
+    private final SpotService spotService;
 
-    public ParkingLotController(ParkingLotService parkingLotService) {
+    public ParkingLotController(ParkingLotService parkingLotService, SpotService spotService) {
         this.parkingLotService = parkingLotService;
+        this.spotService = spotService;
     }
 
     /**
      * Retrieves parking lots falling within the specified bounding box.
-     * We use a bounding box (minLng, minLat, maxLng, maxLat) instead of radius search 
-     * because it directly maps to the visible area of standard map libraries (Mapbox/Google Maps),
+     * We use a bounding box (minLng, minLat, maxLng, maxLat) instead of radius
+     * search
+     * because it directly maps to the visible area of standard map libraries
+     * (Mapbox/Google Maps),
      * avoiding unnecessary frontend coordinate math.
      * 
      * @param bbox Comma-separated coordinates: minLng,minLat,maxLng,maxLat
@@ -48,7 +54,7 @@ public class ParkingLotController {
         double minLat = Double.parseDouble(parts[1]);
         double maxLng = Double.parseDouble(parts[2]);
         double maxLat = Double.parseDouble(parts[3]);
-        
+
         return parkingLotService.findInBoundingBox(minLng, minLat, maxLng, maxLat);
     }
 
@@ -61,8 +67,17 @@ public class ParkingLotController {
     }
 
     /**
-     * Exposes the entire parking lot dataset as a standard GeoJSON FeatureCollection.
-     * This allows map libraries to ingest the data natively as a vector source 
+     * Fetches all spots for a specific parking lot.
+     */
+    @GetMapping("/{id}/spots")
+    public List<SpotResponse> getSpotsByLotId(@PathVariable UUID id) {
+        return spotService.getByParkingLotId(id);
+    }
+
+    /**
+     * Exposes the entire parking lot dataset as a standard GeoJSON
+     * FeatureCollection.
+     * This allows map libraries to ingest the data natively as a vector source
      * without custom mapping logic on the client side.
      */
     @GetMapping("/geojson")

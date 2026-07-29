@@ -3,6 +3,7 @@ package com.parkflow.inventory.api;
 import com.parkflow.inventory.api.dto.GeoJsonFeatureCollection;
 import com.parkflow.inventory.api.dto.ParkingLotResponse;
 import com.parkflow.inventory.application.ParkingLotService;
+import com.parkflow.inventory.application.SpotService;
 import com.parkflow.inventory.domain.enums.ParkingLotStatus;
 import com.parkflow.inventory.domain.enums.ParkingLotType;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,9 @@ class ParkingLotControllerTest {
     @MockBean
     private ParkingLotService parkingLotService;
 
+    @MockBean
+    private SpotService spotService;
+
     @Test
     void shouldReturnLotsInBbox() throws Exception {
         ParkingLotResponse response = new ParkingLotResponse(
@@ -55,5 +59,15 @@ class ParkingLotControllerTest {
         mockMvc.perform(get("/api/v1/parking-lots/geojson"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.type").value("FeatureCollection"));
+    }
+
+    @Test
+    void shouldReturnSpotsForLot() throws Exception {
+        UUID lotId = UUID.randomUUID();
+        when(spotService.getByParkingLotId(lotId)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/parking-lots/" + lotId + "/spots"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
     }
 }

@@ -5,7 +5,7 @@ import com.parkflow.inventory.domain.Spot;
 import com.parkflow.inventory.infra.SpotRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -37,8 +37,18 @@ public class SpotService {
     }
 
     /**
+     * Retrieves all spots for a specific parking lot.
+     */
+    public List<SpotResponse> getByParkingLotId(UUID parkingLotId) {
+        return spotRepository.findByParkingLotId(parkingLotId).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    /**
      * Converts a Spot entity to a DTO, preventing the internal entity state
-     * (and its JPA annotations/relationships) from leaking out to the REST controller.
+     * (and its JPA annotations/relationships) from leaking out to the REST
+     * controller.
      */
     private SpotResponse mapToResponse(Spot spot) {
         return new SpotResponse(
@@ -49,7 +59,6 @@ public class SpotService {
                 spot.getPhysicalStatus(),
                 spot.getLastSensorUpdate(),
                 spot.getLayoutX(),
-                spot.getLayoutY()
-        );
+                spot.getLayoutY());
     }
 }

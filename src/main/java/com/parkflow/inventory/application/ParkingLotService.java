@@ -77,7 +77,9 @@ public class ParkingLotService {
                                 "id", lot.getId(),
                                 "name", lot.getName(),
                                 "hourlyRate", lot.getHourlyRate(),
-                                "status", lot.getStatus()
+                                "status", lot.getStatus(),
+                                "type", lot.getType(),
+                                "address", lot.getAddress()
                         )
                 ))
                 .toList();
