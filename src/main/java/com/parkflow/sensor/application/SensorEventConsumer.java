@@ -12,6 +12,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
+import com.parkflow.shared.domain.events.SpotStatusEvent;
 
 import java.time.Instant;
 
@@ -28,6 +30,7 @@ public class SensorEventConsumer {
     private final SensorEventRepository sensorEventRepository;
     private final SpotRepository spotRepository;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * Listens to the `q.sensor.events` queue.
@@ -57,8 +60,17 @@ public class SensorEventConsumer {
 
             // Only update if this event is newer than the last recorded update
             if (spot.getLastSensorUpdate() == null || event.timestamp().isAfter(spot.getLastSensorUpdate())) {
+                String oldStatus = spot.getPhysicalStatus() != null ? spot.getPhysicalStatus().name() : "";
                 spot.updatePhysicalStatus(event.status(), event.timestamp());
                 spotRepository.save(spot);
+                
+                if (!oldStatus.equals(event.status().name())) {
+                    applicationEventPublisher.publishEvent(new SpotStatusEvent(
+                        spot.getId(),
+                        event.status().name(),
+                        event.timestamp().toString()
+                    ));
+                }
             }
 
             String rawPayload;

@@ -14,8 +14,10 @@ import com.parkflow.security.infra.AppUserRepository;
 import com.parkflow.shared.domain.events.PaymentCommand;
 import com.parkflow.shared.infra.RabbitMQConfig;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.parkflow.shared.domain.events.ReservationChangedEvent;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,19 +39,22 @@ public class ReservationService {
     private final AppUserRepository userRepository;
     private final IdempotencyService idempotencyService;
     private final RabbitTemplate rabbitTemplate;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public ReservationService(ReservationRepository reservationRepository,
                               ReservationAuditRepository auditRepository,
                               SpotRepository spotRepository,
                               AppUserRepository userRepository,
                               IdempotencyService idempotencyService,
-                              RabbitTemplate rabbitTemplate) {
+                              RabbitTemplate rabbitTemplate,
+                              ApplicationEventPublisher applicationEventPublisher) {
         this.reservationRepository = reservationRepository;
         this.auditRepository = auditRepository;
         this.spotRepository = spotRepository;
         this.userRepository = userRepository;
         this.idempotencyService = idempotencyService;
         this.rabbitTemplate = rabbitTemplate;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Transactional
@@ -115,6 +120,10 @@ public class ReservationService {
             }
         );
 
+        applicationEventPublisher.publishEvent(
+            new ReservationChangedEvent(reservation.getId(), reservation.getSpot().getId())
+        );
+
         return mapToResponse(reservation);
     }
 
@@ -145,6 +154,10 @@ public class ReservationService {
                 "{}"
         );
         auditRepository.save(audit);
+
+        applicationEventPublisher.publishEvent(
+            new ReservationChangedEvent(reservation.getId(), reservation.getSpot().getId())
+        );
 
         return mapToResponse(reservation);
     }
