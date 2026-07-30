@@ -3,10 +3,12 @@ package com.parkflow.inventory.api;
 import com.parkflow.inventory.api.dto.GeoJsonFeatureCollection;
 import com.parkflow.inventory.api.dto.ParkingLotResponse;
 import com.parkflow.inventory.api.dto.SpotResponse;
+import com.parkflow.inventory.api.dto.SpotAvailability;
 import com.parkflow.inventory.application.ParkingLotService;
 import com.parkflow.inventory.application.SpotService;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -72,6 +74,18 @@ public class ParkingLotController {
     @GetMapping("/{id}/spots")
     public List<SpotResponse> getSpotsByLotId(@PathVariable UUID id) {
         return spotService.getByParkingLotId(id);
+    }
+
+    /**
+     * Retrieves availability of all spots in a parking lot for a given time range.
+     * Cached in Redis.
+     */
+    @GetMapping("/{id}/availability")
+    public List<SpotAvailability> getAvailability(
+            @PathVariable UUID id,
+            @RequestParam("from") String from,
+            @RequestParam("to") String to) {
+        return spotService.getAvailability(id, Instant.parse(from), Instant.parse(to));
     }
 
     /**

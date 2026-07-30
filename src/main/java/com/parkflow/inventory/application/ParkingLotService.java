@@ -46,6 +46,15 @@ public class ParkingLotService {
     }
 
     /**
+     * Retrieves all parking lots.
+     */
+    public List<ParkingLotResponse> getAll() {
+        return parkingLotRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    /**
      * Fetches a single parking lot by its unique identifier.
      * 
      * @param id the UUID of the parking lot

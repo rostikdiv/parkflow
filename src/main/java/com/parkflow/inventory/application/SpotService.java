@@ -4,7 +4,14 @@ import com.parkflow.inventory.api.dto.SpotResponse;
 import com.parkflow.inventory.domain.Spot;
 import com.parkflow.inventory.infra.SpotRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Cacheable;
+import com.parkflow.inventory.api.dto.SpotAvailability;
+import com.parkflow.inventory.domain.enums.PhysicalStatus;
+import com.parkflow.reservation.infra.ReservationRepository;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,9 +25,11 @@ import java.util.UUID;
 public class SpotService {
 
     private final SpotRepository spotRepository;
+    private final ReservationRepository reservationRepository;
 
-    public SpotService(SpotRepository spotRepository) {
+    public SpotService(SpotRepository spotRepository, ReservationRepository reservationRepository) {
         this.spotRepository = spotRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     /**
@@ -43,6 +52,27 @@ public class SpotService {
         return spotRepository.findByParkingLotId(parkingLotId).stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    /**
+     * Retrieves availability of all spots in a parking lot for a given time range.
+     * Cached in Redis.
+     */
+    @Cacheable(value = "availability", key = "#parkingLotId.toString() + '_' + #from.toString() + '_' + #to.toString()")
+    public List<SpotAvailability> getAvailability(UUID parkingLotId, Instant from, Instant to) {
+        List<Spot> spots = spotRepository.findByParkingLotId(parkingLotId);
+        List<UUID> reservedSpotIds = reservationRepository.findReservedSpotIdsInTimeRange(parkingLotId, from, to);
+        
+        return spots.stream()
+            .map(spot -> new SpotAvailability(
+                spot.getId(),
+                spot.getCode(),
+                spot.getType().name(),
+                !reservedSpotIds.contains(spot.getId()) && spot.getPhysicalStatus() != PhysicalStatus.OCCUPIED,
+                spot.getLayoutX(),
+                spot.getLayoutY()
+            ))
+            .toList();
     }
 
     /**
