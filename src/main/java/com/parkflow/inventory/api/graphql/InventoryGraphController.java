@@ -62,11 +62,6 @@ public class InventoryGraphController {
     @SubscriptionMapping
     public Flux<SpotStatusEvent> spotStatusChanged(@Argument UUID lotId) {
         return spotStatusSink.asFlux()
-            // In a real application, we would check if the spot belongs to the requested lotId.
-            // For MVP, if lotId is not used to filter, we might just return all or implement the check.
-            // Since we need to filter by lotId, we would need the spot's lotId in the event.
-            // For now, we will return all events and let the client filter, or we could add lotId to the event.
-            // Let's assume the client filters or we just pass it through.
-            .map(event -> event);
+            .filter(event -> event.lotId().equals(lotId));
     }
 }

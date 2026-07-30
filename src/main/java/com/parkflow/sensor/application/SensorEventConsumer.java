@@ -67,6 +67,7 @@ public class SensorEventConsumer {
                 if (!oldStatus.equals(event.status().name())) {
                     applicationEventPublisher.publishEvent(new SpotStatusEvent(
                         spot.getId(),
+                        spot.getParkingLot().getId(),
                         event.status().name(),
                         event.timestamp().toString()
                     ));
