@@ -1,0 +1,57 @@
+type Query {
+  parkingLots(bbox: BboxInput): [ParkingLot!]!
+  parkingLot(id: ID!): ParkingLot
+  availability(lotId: ID!, from: String!, to: String!): [SpotAvailability!]!
+  myReservations(status: String): [Reservation!]!
+}
+
+type Subscription {
+  spotStatusChanged(lotId: ID!): SpotStatusEvent!
+}
+
+type SpotStatusEvent { 
+  spotId: ID!
+  status: String!
+  at: String! 
+}
+
+input BboxInput {
+  minLng: Float!
+  minLat: Float!
+  maxLng: Float!
+  maxLat: Float!
+}
+
+type ParkingLot {
+  id: ID!
+  name: String!
+  address: String!
+  latitude: Float!
+  longitude: Float!
+  type: String!
+  hourlyRate: Float!
+  opensAt: String!
+  closesAt: String!
+  timeZone: String!
+  status: String!
+}
+
+type SpotAvailability {
+  spotId: ID!
+  code: String!
+  type: String!
+  isAvailable: Boolean!
+  layoutX: Float!
+  layoutY: Float!
+}
+
+type Reservation {
+  id: ID!
+  spotId: ID!
+  userId: ID!
+  licensePlate: String!
+  startTime: String!
+  endTime: String!
+  status: String!
+  totalPrice: Float!
+}
