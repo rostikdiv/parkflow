@@ -1,6 +1,7 @@
 package com.parkflow.sensor.infra;
 
 import com.parkflow.sensor.api.dto.SensorEventDto;
+import com.parkflow.shared.infra.RabbitMQConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

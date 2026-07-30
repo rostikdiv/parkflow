@@ -3,7 +3,7 @@ package com.parkflow.sensor.application;
 import com.parkflow.inventory.infra.SpotRepository;
 import com.parkflow.sensor.api.dto.SensorEventDto;
 import com.parkflow.sensor.domain.SensorEvent;
-import com.parkflow.sensor.infra.RabbitMQConfig;
+import com.parkflow.shared.infra.RabbitMQConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.parkflow.sensor.infra.SensorEventRepository;
 import lombok.RequiredArgsConstructor;
