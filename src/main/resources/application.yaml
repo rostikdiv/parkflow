@@ -3,6 +3,33 @@ spring:
     name: parkflow
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+resilience4j.retry:
+  instances:
+    paymentService:
+      maxAttempts: 3
+      waitDuration: 500ms
+      enableExponentialBackoff: true
+      exponentialBackoffMultiplier: 2
+
+resilience4j.circuitbreaker:
+  instances:
+    paymentService:
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 5
+      failureRateThreshold: 50
+      waitDurationInOpenState: 10s
+      permittedNumberOfCallsInHalfOpenState: 2
+      registerHealthIndicator: true
 
 management:
   endpoints:

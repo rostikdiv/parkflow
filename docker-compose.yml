@@ -56,6 +56,13 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: parkflow-mailhog
+    ports:
+      - "1025:1025" # SMTP server
+      - "8025:8025" # Web UI
+
 volumes:
   postgres-data:
   redis-data:
