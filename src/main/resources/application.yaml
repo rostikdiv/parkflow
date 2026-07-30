@@ -13,6 +13,10 @@ spring:
           starttls:
             enable: false
   graphql:
+    cors:
+      allowed-origins: "http://localhost:5173"
+      allowed-methods: "*"
+      allow-credentials: true
     graphiql:
       enabled: true
       path: /graphiql
