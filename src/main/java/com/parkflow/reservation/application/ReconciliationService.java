@@ -32,25 +32,39 @@ public class ReconciliationService {
     private final SpotRepository spotRepository;
     private final ReservationRepository reservationRepository;
     private final AnomalyService anomalyService;
+    private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     public ReconciliationService(SpotRepository spotRepository,
                                  ReservationRepository reservationRepository,
-                                 AnomalyService anomalyService) {
+                                 AnomalyService anomalyService,
+                                 org.springframework.transaction.support.TransactionTemplate transactionTemplate) {
         this.spotRepository = spotRepository;
         this.reservationRepository = reservationRepository;
         this.anomalyService = anomalyService;
+        this.transactionTemplate = transactionTemplate;
     }
 
     // See plan §10
     @Scheduled(fixedDelay = 120000) // Every 2 minutes
-    @Transactional
     public void runReconciliation() {
         log.info("Starting reconciliation job");
         Instant now = Instant.now();
         List<Spot> spots = spotRepository.findAll();
 
         for (Spot spot : spots) {
-            checkSpot(spot, now);
+            try {
+                transactionTemplate.execute(status -> {
+                    Spot freshSpot = spotRepository.findById(spot.getId()).orElse(null);
+                    if (freshSpot != null) {
+                        checkSpot(freshSpot, now);
+                    }
+                    return null;
+                });
+            } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+                log.debug("Concurrent update for spot {}. Will retry next cycle.", spot.getId());
+            } catch (Exception e) {
+                log.error("Error processing spot {}", spot.getId(), e);
+            }
         }
     }
 

@@ -11,6 +11,9 @@ import com.parkflow.reservation.infra.ReservationAuditRepository;
 import com.parkflow.reservation.infra.ReservationRepository;
 import com.parkflow.security.domain.AppUser;
 import com.parkflow.security.infra.AppUserRepository;
+import com.parkflow.shared.domain.events.PaymentCommand;
+import com.parkflow.shared.infra.RabbitMQConfig;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,17 +36,20 @@ public class ReservationService {
     private final SpotRepository spotRepository;
     private final AppUserRepository userRepository;
     private final IdempotencyService idempotencyService;
+    private final RabbitTemplate rabbitTemplate;
 
     public ReservationService(ReservationRepository reservationRepository,
                               ReservationAuditRepository auditRepository,
                               SpotRepository spotRepository,
                               AppUserRepository userRepository,
-                              IdempotencyService idempotencyService) {
+                              IdempotencyService idempotencyService,
+                              RabbitTemplate rabbitTemplate) {
         this.reservationRepository = reservationRepository;
         this.auditRepository = auditRepository;
         this.spotRepository = spotRepository;
         this.userRepository = userRepository;
         this.idempotencyService = idempotencyService;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Transactional
@@ -98,6 +104,16 @@ public class ReservationService {
                 "{}"
         );
         auditRepository.save(audit);
+
+        PaymentCommand paymentCommand = new PaymentCommand(reservation.getId(), totalPrice, userId);
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+            new org.springframework.transaction.support.TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_PAYMENT, "payment.command", paymentCommand);
+                }
+            }
+        );
 
         return mapToResponse(reservation);
     }

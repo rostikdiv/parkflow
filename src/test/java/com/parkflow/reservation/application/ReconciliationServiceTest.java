@@ -35,12 +35,18 @@ class ReconciliationServiceTest {
     private ReservationRepository reservationRepository;
     @Mock
     private AnomalyService anomalyService;
+    @Mock
+    private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     private ReconciliationService reconciliationService;
 
     @BeforeEach
     void setUp() {
-        reconciliationService = new ReconciliationService(spotRepository, reservationRepository, anomalyService);
+        lenient().when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
+            org.springframework.transaction.support.TransactionCallback<?> callback = invocation.getArgument(0);
+            return callback.doInTransaction(new org.springframework.transaction.support.SimpleTransactionStatus());
+        });
+        reconciliationService = new ReconciliationService(spotRepository, reservationRepository, anomalyService, transactionTemplate);
     }
 
     @Test
@@ -51,6 +57,7 @@ class ReconciliationServiceTest {
         when(spot.getPhysicalStatus()).thenReturn(PhysicalStatus.FREE);
         
         when(spotRepository.findAll()).thenReturn(List.of(spot));
+        when(spotRepository.findById(spot.getId())).thenReturn(Optional.of(spot));
         when(reservationRepository.findActiveReservationForSpot(eq(spot.getId()), any(Instant.class)))
                 .thenReturn(Optional.empty());
         when(anomalyService.getUnresolvedAnomaliesForSpot(spot.getId())).thenReturn(List.of());
@@ -73,6 +80,7 @@ class ReconciliationServiceTest {
         when(spot.getPhysicalStatus()).thenReturn(PhysicalStatus.OCCUPIED);
         
         when(spotRepository.findAll()).thenReturn(List.of(spot));
+        when(spotRepository.findById(spot.getId())).thenReturn(Optional.of(spot));
         when(reservationRepository.findActiveReservationForSpot(eq(spot.getId()), any(Instant.class)))
                 .thenReturn(Optional.empty());
         when(anomalyService.getUnresolvedAnomaliesForSpot(spot.getId())).thenReturn(List.of());
@@ -95,6 +103,7 @@ class ReconciliationServiceTest {
         when(res.getStartTime()).thenReturn(Instant.now().minus(16, ChronoUnit.MINUTES));
         
         when(spotRepository.findAll()).thenReturn(List.of(spot));
+        when(spotRepository.findById(spot.getId())).thenReturn(Optional.of(spot));
         when(reservationRepository.findActiveReservationForSpot(eq(spot.getId()), any(Instant.class)))
                 .thenReturn(Optional.of(res));
         when(anomalyService.getUnresolvedAnomaliesForSpot(spot.getId())).thenReturn(List.of());
@@ -114,6 +123,7 @@ class ReconciliationServiceTest {
         when(spot.getPhysicalStatus()).thenReturn(PhysicalStatus.OCCUPIED);
         
         when(spotRepository.findAll()).thenReturn(List.of(spot));
+        when(spotRepository.findById(spot.getId())).thenReturn(Optional.of(spot));
         when(reservationRepository.findActiveReservationForSpot(eq(spot.getId()), any(Instant.class)))
                 .thenReturn(Optional.empty());
 
@@ -139,6 +149,7 @@ class ReconciliationServiceTest {
         when(spot.getPhysicalStatus()).thenReturn(PhysicalStatus.FREE);
         
         when(spotRepository.findAll()).thenReturn(List.of(spot));
+        when(spotRepository.findById(spot.getId())).thenReturn(Optional.of(spot));
         // No reservation, spot is FREE -> Normal state, no anomalies generated
         when(reservationRepository.findActiveReservationForSpot(eq(spot.getId()), any(Instant.class)))
                 .thenReturn(Optional.empty());
