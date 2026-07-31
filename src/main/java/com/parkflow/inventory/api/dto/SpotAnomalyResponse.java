@@ -7,6 +7,9 @@ import java.util.UUID;
 public record SpotAnomalyResponse(
     UUID id,
     UUID spotId,
+    String spotCode,
+    UUID lotId,
+    String lotName,
     SpotAnomalyType type,
     String details,
     Instant detectedAt,

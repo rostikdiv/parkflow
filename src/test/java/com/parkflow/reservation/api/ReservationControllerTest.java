@@ -36,6 +36,16 @@ class ReservationControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @org.junit.jupiter.api.BeforeEach
+    void setupSecurity() {
+        com.parkflow.security.domain.AppUser testUser = new com.parkflow.security.domain.AppUser(
+                UUID.fromString("11111111-1111-1111-1111-111111111111"), 
+                "test@test.com", "pass", "Test", "123", "USER");
+        org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth = 
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(testUser, null, testUser.getAuthorities());
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
     @Test
     void shouldCreateReservation() throws Exception {
         UUID spotId = UUID.randomUUID();
@@ -44,7 +54,8 @@ class ReservationControllerTest {
         ReservationRequest request = new ReservationRequest(spotId, from, to, "AA1234BB");
 
         ReservationResponse response = new ReservationResponse(
-                UUID.randomUUID(), spotId, "AA1234BB", from, to, "PENDING", BigDecimal.valueOf(100), Instant.now()
+                UUID.randomUUID(), spotId, "M-01", UUID.randomUUID(), "Test Lot", "AA1234BB",
+                from, to, "PENDING", BigDecimal.valueOf(100), Instant.now()
         );
 
         Mockito.when(reservationService.createReservation(any(UUID.class), eq("test-idempotency-key"), any(ReservationRequest.class)))
@@ -75,7 +86,8 @@ class ReservationControllerTest {
     void shouldCancelReservation() throws Exception {
         UUID resId = UUID.randomUUID();
         ReservationResponse response = new ReservationResponse(
-                resId, UUID.randomUUID(), "AA1234BB", Instant.now(), Instant.now(), "CANCELLED", BigDecimal.valueOf(100), Instant.now()
+                resId, UUID.randomUUID(), "M-01", UUID.randomUUID(), "Test Lot", "AA1234BB",
+                Instant.now(), Instant.now(), "CANCELLED", BigDecimal.valueOf(100), Instant.now()
         );
 
         Mockito.when(reservationService.cancelReservation(eq(resId), any(UUID.class)))

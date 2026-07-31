@@ -4,12 +4,14 @@ import com.parkflow.inventory.api.dto.SpotAnomalyResponse;
 import com.parkflow.inventory.application.AnomalyService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/v1/anomalies")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminAnomalyController {
 
     private final AnomalyService anomalyService;

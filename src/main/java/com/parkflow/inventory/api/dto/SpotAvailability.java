@@ -1,6 +1,7 @@
 package com.parkflow.inventory.api.dto;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.UUID;
 
 public record SpotAvailability(
@@ -9,5 +10,7 @@ public record SpotAvailability(
     String type,
     boolean isAvailable,
     Double layoutX,
-    Double layoutY
+    Double layoutY,
+    Instant bookedUntil,
+    boolean isAnomaly
 ) implements Serializable {}

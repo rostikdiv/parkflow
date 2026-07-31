@@ -2,7 +2,15 @@ type Query {
   parkingLots(bbox: BboxInput): [ParkingLot!]!
   parkingLot(id: ID!): ParkingLot
   availability(lotId: ID!, from: String!, to: String!): [SpotAvailability!]!
-  myReservations(status: String): [Reservation!]!
+  myReservations(status: String, page: Int = 0, size: Int = 10): ReservationPage!
+}
+
+type ReservationPage {
+  content: [Reservation!]!
+  totalElements: Int!
+  totalPages: Int!
+  number: Int!
+  size: Int!
 }
 
 type Subscription {
@@ -43,11 +51,16 @@ type SpotAvailability {
   isAvailable: Boolean!
   layoutX: Float!
   layoutY: Float!
+  bookedUntil: String
+  isAnomaly: Boolean!
 }
 
 type Reservation {
   id: ID!
   spotId: ID!
+  spotCode: String!
+  lotId: ID!
+  lotName: String!
   userId: ID!
   licensePlate: String!
   startTime: String!

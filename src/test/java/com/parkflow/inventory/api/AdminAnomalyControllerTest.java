@@ -38,7 +38,7 @@ class AdminAnomalyControllerTest {
         UUID anomalyId = UUID.randomUUID();
         UUID spotId = UUID.randomUUID();
         SpotAnomalyResponse response = new SpotAnomalyResponse(
-                anomalyId, spotId, SpotAnomalyType.SENSOR_SILENT, "test", Instant.now(), null
+                anomalyId, spotId, "A-01", UUID.randomUUID(), "Test Lot", SpotAnomalyType.SENSOR_SILENT, "test", Instant.now(), null
         );
 
         when(anomalyService.getAnomalies(false)).thenReturn(List.of(response));

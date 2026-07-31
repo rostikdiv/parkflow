@@ -4,12 +4,15 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-public record ReservationResponse(
+public record AdminReservationResponse(
         UUID id,
         UUID spotId,
         String spotCode,
         UUID lotId,
         String lotName,
+        UUID userId,
+        String userEmail,
+        String userFullName,
         String licensePlate,
         Instant startTime,
         Instant endTime,

@@ -46,6 +46,9 @@ public class AnomalyService {
         return new SpotAnomalyResponse(
                 anomaly.getId(),
                 anomaly.getSpot().getId(),
+                anomaly.getSpot().getCode(),
+                anomaly.getSpot().getParkingLot().getId(),
+                anomaly.getSpot().getParkingLot().getName(),
                 anomaly.getType(),
                 anomaly.getDetails(),
                 anomaly.getDetectedAt(),
