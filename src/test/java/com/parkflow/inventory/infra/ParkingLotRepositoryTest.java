@@ -20,22 +20,35 @@ class ParkingLotRepositoryTest {
     @Autowired
     private ParkingLotRepository parkingLotRepository;
 
+    @Autowired
+    private SpotRepository spotRepository;
+
+    @org.junit.jupiter.api.BeforeEach
+    void cleanDb() {
+        spotRepository.deleteAll();
+        parkingLotRepository.deleteAll();
+    }
+
     @Test
     void shouldFindActiveParkingLotsInBoundingBox() {
-        // V3__seed_data.sql should be applied automatically by Flyway during context startup.
-        // The Khreshchatyk lot is at 50.4475, 30.5225.
-        // We will query a bounding box around it.
+        // Insert a test parking lot inside the bounding box
+        ParkingLot lot = new ParkingLot(
+                "Test Khreshchatyk", "Test St", 50.4475, 30.5225,
+                com.parkflow.inventory.domain.enums.ParkingLotType.OPEN_AIR, 
+                java.math.BigDecimal.TEN, 
+                java.time.LocalTime.of(8, 0), 
+                java.time.LocalTime.of(20, 0),
+                java.time.ZoneId.of("Europe/Kyiv")
+        );
+        parkingLotRepository.save(lot);
 
+        // Query a bounding box around it
         List<ParkingLot> lots = parkingLotRepository.findActiveInBbox(
                 50.4000, 30.5000, 50.4500, 30.5500
         );
 
         assertThat(lots).isNotEmpty();
-        // Since V3 creates 3 lots in Kyiv, all of them should fall within this large bbox
-        // Khreshchatyk: 50.4475, 30.5225
-        // Gulliver: 50.4389, 30.5229
-        // Ocean Plaza: 50.4124, 30.5226
-        assertThat(lots).hasSize(3);
-        assertThat(lots).extracting(ParkingLot::getName).contains("Khreshchatyk Open Air");
+        assertThat(lots).hasSize(1);
+        assertThat(lots.getFirst().getName()).isEqualTo("Test Khreshchatyk");
     }
 }

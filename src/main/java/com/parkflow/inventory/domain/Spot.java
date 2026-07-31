@@ -46,7 +46,7 @@ public class Spot {
     // the advanced PostgreSQL exclusion constraint in M2.
     @Version
     @Column(nullable = false)
-    private Long version = 0L;
+    private Long version;
 
     @Column(name = "layout_x")
     private Double layoutX;
