@@ -3,6 +3,7 @@ package com.parkflow.inventory.api;
 import com.parkflow.inventory.api.dto.SpotAnomalyResponse;
 import com.parkflow.inventory.application.AnomalyService;
 import com.parkflow.inventory.domain.enums.SpotAnomalyType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

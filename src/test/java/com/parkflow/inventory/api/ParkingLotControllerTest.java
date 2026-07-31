@@ -6,6 +6,7 @@ import com.parkflow.inventory.application.ParkingLotService;
 import com.parkflow.inventory.application.SpotService;
 import com.parkflow.inventory.domain.enums.ParkingLotStatus;
 import com.parkflow.inventory.domain.enums.ParkingLotType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.parkflow.security.application.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

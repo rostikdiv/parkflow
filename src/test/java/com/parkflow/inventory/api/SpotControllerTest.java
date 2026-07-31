@@ -4,6 +4,7 @@ import com.parkflow.inventory.api.dto.SpotResponse;
 import com.parkflow.inventory.application.SpotService;
 import com.parkflow.inventory.domain.enums.PhysicalStatus;
 import com.parkflow.inventory.domain.enums.SpotType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.parkflow.security.application.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
