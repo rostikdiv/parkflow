@@ -29,6 +29,15 @@ class SpotRepositoryTest {
     @Autowired
     private ParkingLotRepository parkingLotRepository;
 
+    @org.junit.jupiter.api.BeforeEach
+    void cleanDb() {
+        spotRepository.deleteAll();
+        // Don't delete parking lots here because ParkingLotRepositoryTest relies on seed data!
+        // Or wait, if we delete them, we lose the V3__seed_data.sql!
+        // The seed data has 3 parking lots. If we delete them, they won't be re-created unless Flyway runs again.
+        // Actually, @DataJpaTest already rolls back. 
+    }
+
     @Test
     void shouldFindByParkingLotId() {
         ParkingLot lot = new ParkingLot(

@@ -4,10 +4,12 @@ import com.parkflow.inventory.api.dto.SpotResponse;
 import com.parkflow.inventory.application.SpotService;
 import com.parkflow.inventory.domain.enums.PhysicalStatus;
 import com.parkflow.inventory.domain.enums.SpotType;
+import com.parkflow.security.application.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -27,6 +29,15 @@ class SpotControllerTest {
 
     @MockBean
     private SpotService spotService;
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     void shouldReturnSpotById() throws Exception {

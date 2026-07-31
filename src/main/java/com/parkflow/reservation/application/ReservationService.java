@@ -16,6 +16,7 @@ import com.parkflow.shared.domain.events.PaymentCommand;
 import com.parkflow.shared.infra.RabbitMQConfig;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -103,7 +104,18 @@ public class ReservationService {
                 idempotencyKey
         );
 
-        reservation = reservationRepository.save(reservation);
+        try {
+            reservation = reservationRepository.save(reservation);
+            // Flush is necessary here to trigger the exclusion constraint immediately before method returns
+            reservationRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            Throwable cause = e.getCause();
+            if (cause != null && cause.getCause() != null && cause.getCause().getMessage() != null && 
+                cause.getCause().getMessage().contains("no_overlapping_reservations")) {
+                throw new IllegalStateException("Spot already reserved in requested time range");
+            }
+            throw e;
+        }
 
         ReservationAudit audit = new ReservationAudit(
                 UUID.randomUUID(),
