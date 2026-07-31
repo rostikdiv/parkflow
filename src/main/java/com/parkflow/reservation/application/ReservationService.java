@@ -2,6 +2,7 @@ package com.parkflow.reservation.application;
 
 import com.parkflow.inventory.domain.Spot;
 import com.parkflow.inventory.infra.SpotRepository;
+import com.parkflow.reservation.api.dto.AdminReservationResponse;
 import com.parkflow.reservation.api.dto.ReservationRequest;
 import com.parkflow.reservation.api.dto.ReservationResponse;
 import com.parkflow.reservation.domain.Reservation;
@@ -15,6 +16,8 @@ import com.parkflow.shared.domain.events.PaymentCommand;
 import com.parkflow.shared.infra.RabbitMQConfig;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.parkflow.shared.domain.events.ReservationChangedEvent;
@@ -22,9 +25,7 @@ import com.parkflow.shared.domain.events.ReservationChangedEvent;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Core business logic for managing reservations.
@@ -59,6 +60,10 @@ public class ReservationService {
 
     @Transactional
     public ReservationResponse createReservation(UUID userId, String idempotencyKey, ReservationRequest request) {
+        if (request.from().isBefore(java.time.Instant.now().minusSeconds(60))) {
+            throw new IllegalArgumentException("Cannot book in the past");
+        }
+
         // See plan §5: Fast fail-fast for duplicate requests using Redis SETNX.
         // The unique constraint in the DB acts as a durable fallback.
         if (!idempotencyService.tryAcquire(idempotencyKey)) {
@@ -163,12 +168,21 @@ public class ReservationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ReservationResponse> getMyReservations(UUID userId, ReservationStatusType status) {
-        List<Reservation> reservations = (status != null)
-                ? reservationRepository.findByUserIdAndStatus(userId, status)
-                : reservationRepository.findByUserId(userId);
+    public Page<ReservationResponse> getMyReservations(UUID userId, ReservationStatusType status, Pageable pageable) {
+        Page<Reservation> reservations = (status != null)
+                ? reservationRepository.findByUserIdAndStatus(userId, status, pageable)
+                : reservationRepository.findByUserId(userId, pageable);
 
-        return reservations.stream().map(this::mapToResponse).collect(Collectors.toList());
+        return reservations.map(this::mapToResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AdminReservationResponse> getAllReservations(ReservationStatusType status, Pageable pageable) {
+        Page<Reservation> reservations = (status != null)
+                ? reservationRepository.findByStatus(status, pageable)
+                : reservationRepository.findAll(pageable);
+
+        return reservations.map(this::mapToAdminResponse);
     }
 
     @Transactional(readOnly = true)
@@ -187,6 +201,28 @@ public class ReservationService {
         return new ReservationResponse(
                 reservation.getId(),
                 reservation.getSpot().getId(),
+                reservation.getSpot().getCode(),
+                reservation.getSpot().getParkingLot().getId(),
+                reservation.getSpot().getParkingLot().getName(),
+                reservation.getLicensePlate(),
+                reservation.getStartTime(),
+                reservation.getEndTime(),
+                reservation.getStatus().name(),
+                reservation.getTotalPrice(),
+                reservation.getCreatedAt()
+        );
+    }
+
+    private AdminReservationResponse mapToAdminResponse(Reservation reservation) {
+        return new AdminReservationResponse(
+                reservation.getId(),
+                reservation.getSpot().getId(),
+                reservation.getSpot().getCode(),
+                reservation.getSpot().getParkingLot().getId(),
+                reservation.getSpot().getParkingLot().getName(),
+                reservation.getUser().getId(),
+                reservation.getUser().getEmail(),
+                reservation.getUser().getFullName(),
                 reservation.getLicensePlate(),
                 reservation.getStartTime(),
                 reservation.getEndTime(),

@@ -13,6 +13,6 @@ public record ReservationRequest(
         @NotNull UUID spotId,
         @NotNull @FutureOrPresent Instant from,
         @NotNull @Future Instant to,
-        @NotBlank @Pattern(regexp = "^[A-Z0-9-]{3,10}$", message = "Invalid license plate format") String licensePlate
+        @NotBlank @Pattern(regexp = "^[A-Z]{2}\\d{4}[A-Z]{2}$", message = "Invalid license plate format") String licensePlate
 ) {
 }
