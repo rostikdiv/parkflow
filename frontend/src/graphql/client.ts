@@ -1,27 +1,40 @@
-import { Client, cacheExchange, fetchExchange, subscriptionExchange } from 'urql';
+import { Client, fetchExchange, subscriptionExchange } from 'urql';
 import { createClient as createWSClient } from 'graphql-ws';
+import { getStoredToken } from '../lib/auth';
 
 const wsClient = createWSClient({
-  // Connect directly to the backend in dev to bypass Vite's WS proxy issues.
-  // In production, window.location.host would point to the same server.
+  // Connect directly to the backend in dev — more reliable than proxying WebSockets.
   url: import.meta.env.DEV
     ? 'ws://localhost:8080/graphql-ws'
     : `ws://${window.location.host}/graphql-ws`,
-  // Only connect when the first subscription is made, not on page load
   lazy: true,
+  connectionParams: () => {
+    const token = getStoredToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
 });
 
+// We intentionally skip cacheExchange (urql v5 default) because:
+// 1. Without __typename the normalised cache can't track entities → stale data after mutations.
+// 2. Availability data must always be fresh (real-time parking state).
+// Every query uses requestPolicy 'network-only' by default instead.
 export const client = new Client({
   url: '/graphql',
   preferGetMethod: false,
-  fetchOptions: {
-    method: 'POST',
-    headers: {
+  fetchOptions: () => {
+    const token = getStoredToken();
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-    },
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return {
+      method: 'POST',
+      headers,
+    };
   },
   exchanges: [
-    cacheExchange,
     fetchExchange,
     subscriptionExchange({
       forwardSubscription(request) {

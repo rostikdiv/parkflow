@@ -6,10 +6,16 @@ export function AppLayout({
   children,
   query,
   onQueryChange,
+  onOpenReservations,
+  onOpenProfile,
+  onOpenAdmin,
 }: {
   children: React.ReactNode
   query: string
   onQueryChange: (value: string) => void
+  onOpenReservations: () => void
+  onOpenProfile: () => void
+  onOpenAdmin: () => void
 }) {
   return (
     <div className="absolute inset-0 overflow-hidden bg-background">
@@ -34,7 +40,7 @@ export function AppLayout({
           <SearchBar value={query} onChange={onQueryChange} />
         </div>
         <div className="pointer-events-auto">
-          <ProfileAvatar />
+          <ProfileAvatar onOpenReservations={onOpenReservations} onOpenProfile={onOpenProfile} onOpenAdmin={onOpenAdmin} />
         </div>
       </header>
     </div>

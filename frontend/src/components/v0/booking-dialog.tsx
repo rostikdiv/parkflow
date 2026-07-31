@@ -6,7 +6,7 @@ import { Loader2, CircleParking, Minus, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ParkingLot, Spot } from '@/lib/parking'
 
-const PLATE_RE = /^[A-Z0-9]{2,8}$/
+const PLATE_RE = /^[A-Z]{2}\d{4}[A-Z]{2}$/
 
 export function BookingDialog({
   open,
@@ -88,7 +88,7 @@ export function BookingDialog({
               value={plate}
               onChange={(e) => setPlate(e.target.value.toUpperCase().replace(/\s/g, ''))}
               onBlur={() => setTouched(true)}
-              placeholder="ABC1234"
+              placeholder="KA1234BB"
               maxLength={8}
               autoComplete="off"
               spellCheck={false}
@@ -103,7 +103,7 @@ export function BookingDialog({
             />
             {touched && !plateValid && (
               <p className="mt-1.5 text-xs text-destructive">
-                Enter 2–8 letters or numbers (no spaces).
+                Enter a valid license plate (e.g., KA1234BB).
               </p>
             )}
           </div>

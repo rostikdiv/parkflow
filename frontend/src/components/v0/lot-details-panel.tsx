@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { X, MapPin, Navigation2, CircleParking } from 'lucide-react'
+import { X, MapPin, Navigation2, CircleParking, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { lotStats, type ParkingLot, type Spot } from '@/lib/parking'
 import { TimeRangePicker } from './time-range-picker'
@@ -10,17 +9,30 @@ import { SpotGrid } from './spot-grid'
 export function LotDetailsPanel({
   lot,
   flashing,
+  fromIso,
+  toIso,
+  onFromChange,
+  onToChange,
   onClose,
   onSelectSpot,
 }: {
   lot: ParkingLot
   flashing: Set<string>
+  /** ISO string — controlled by parent which owns the GraphQL query */
+  fromIso: string
+  toIso: string
+  onFromChange: (iso: string) => void
+  onToChange: (iso: string) => void
   onClose: () => void
   onSelectSpot: (spot: Spot) => void
 }) {
-  const [from, setFrom] = useState('09:00')
-  const [to, setTo] = useState('11:00')
   const { total, free } = lotStats(lot)
+  const isHistoryMode = new Date(fromIso).getTime() < Date.now() - 60000;
+
+  const handleSelectSpot = (spot: Spot) => {
+    if (isHistoryMode) return;
+    onSelectSpot(spot);
+  };
 
   return (
     <>
@@ -39,7 +51,7 @@ export function LotDetailsPanel({
           'inset-x-0 bottom-0 max-h-[86vh] rounded-t-3xl border-t',
           'animate-in slide-in-from-bottom duration-300 ease-out',
           // Desktop: right sidebar
-          'md:inset-y-0 md:right-0 md:left-auto md:max-h-none md:w-[420px] md:rounded-none md:rounded-l-3xl md:border-l md:border-t-0',
+          'md:inset-y-0 md:right-0 md:left-auto md:max-h-none md:w-[440px] md:rounded-none md:rounded-l-3xl md:border-l md:border-t-0',
           'md:animate-in md:slide-in-from-right md:fade-in',
         )}
         aria-label={`${lot.name} details`}
@@ -75,21 +87,36 @@ export function LotDetailsPanel({
 
         {/* Stat strip */}
         <div className="grid grid-cols-3 gap-2 px-5 pb-4">
-          <Stat label="Distance" value={`${lot.distanceKm.toFixed(1)} km`} icon={<Navigation2 size={13} aria-hidden="true" />} />
-          <Stat label="Rate" value={`$${lot.hourlyRate.toFixed(2)}/hr`} />
+          <Stat label="Rate" value={`₴${lot.hourlyRate.toFixed(0)}/hr`} />
           <Stat label="Free now" value={`${free}/${total}`} highlight={free > 0} />
+          <Stat
+            label="Status"
+            value={free === 0 ? 'Full' : free < total * 0.2 ? 'Almost full' : 'Available'}
+            highlight={free > 0}
+          />
         </div>
 
         {/* Scrollable content */}
         <div className="flex flex-col gap-4 overflow-y-auto scrollbar-slim px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-1">
-          <TimeRangePicker from={from} to={to} onFromChange={setFrom} onToChange={setTo} />
+          <TimeRangePicker
+            fromIso={fromIso}
+            toIso={toIso}
+            onFromChange={onFromChange}
+            onToChange={onToChange}
+          />
 
           <div>
             <div className="mb-2 flex items-center justify-between px-1">
               <h3 className="text-sm font-semibold">Select a spot</h3>
               <span className="text-xs text-muted-foreground">Tap a green spot to book</span>
             </div>
-            <SpotGrid lot={lot} flashing={flashing} onSelectSpot={onSelectSpot} />
+            {isHistoryMode && (
+              <div className="mb-3 rounded-lg bg-yellow-500/20 border border-yellow-500/30 px-3 py-2 text-xs font-medium text-yellow-600 dark:text-yellow-500 flex items-center gap-2">
+                <AlertTriangle size={14} />
+                Ви переглядаєте історію. Бронювання недоступне.
+              </div>
+            )}
+            <SpotGrid lot={lot} flashing={flashing} onSelectSpot={handleSelectSpot} />
           </div>
         </div>
       </aside>

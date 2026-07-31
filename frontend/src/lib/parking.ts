@@ -2,7 +2,7 @@
 // In production these shapes would come from the GraphQL API and spot status
 // deltas would arrive over a WebSocket subscription. Here we simulate both.
 
-export type SpotStatus = 'available' | 'occupied'
+export type SpotStatus = 'available' | 'occupied' | 'anomaly'
 
 export type SpotKind = 'standard' | 'accessible' | 'ev'
 
@@ -14,6 +14,7 @@ export interface Spot {
   kind: SpotKind
   /** Column index within its row (0-based) */
   col: number
+  bookedUntil?: string
 }
 
 export interface SpotRow {

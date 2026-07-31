@@ -29,9 +29,10 @@ export function adaptLot(apiLot: ApiParkingLot, apiSpots?: SpotAvailability[]): 
         spots: slice.map((s, col) => ({
           id: s.spotId,
           label: s.code,
-          status: s.isAvailable ? 'available' : 'occupied',
+          status: s.isAnomaly ? 'anomaly' : ((s.isAvailable === true || (s as any).available === true) ? 'available' : 'occupied'),
           kind: (s.type.toLowerCase() === 'accessible' || s.type.toLowerCase() === 'ev') ? (s.type.toLowerCase() as any) : 'standard',
           col: col,
+          bookedUntil: s.bookedUntil,
         })),
       });
     }
@@ -41,7 +42,8 @@ export function adaptLot(apiLot: ApiParkingLot, apiSpots?: SpotAvailability[]): 
     id: apiLot.id,
     name: apiLot.name,
     address: apiLot.address,
-    distanceKm: 0.5, // Mock distance for now
+    // Distance requires the user's GPS location — not available at MVP; set to 0
+    distanceKm: 0,
     hourlyRate: apiLot.hourlyRate || 0,
     x: 0,
     y: 0,

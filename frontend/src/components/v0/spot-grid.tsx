@@ -1,7 +1,7 @@
 'use client'
 
 import { Fragment } from 'react'
-import { Car, Accessibility, Zap, ArrowDown, ArrowUp, LogIn, LogOut } from 'lucide-react'
+import { Car, Accessibility, Zap, ArrowDown, ArrowUp, LogIn, LogOut, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ParkingLot, Spot } from '@/lib/parking'
 
@@ -22,8 +22,9 @@ export function SpotGrid({
           <LogIn size={13} aria-hidden="true" /> Entry
         </span>
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <Legend className="bg-available" label="Free" />
-          <Legend className="bg-occupied" label="Taken" />
+          <Legend className="border-primary bg-primary/20" label="Free" />
+          <Legend className="border-occupied bg-occupied/25" label="Taken" />
+          <Legend className="border-yellow-500 bg-yellow-500/20 text-yellow-500" label="Anomaly" />
         </div>
         <span className="flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
           <LogOut size={13} aria-hidden="true" /> Exit
@@ -84,28 +85,26 @@ function SpotCell({
   flashing: boolean
   onSelect: () => void
 }) {
-  const available = spot.status === 'available'
+  const isAvail = spot.status === 'available'
+  const isAnomaly = spot.status === 'anomaly'
   const KindIcon = spot.kind === 'accessible' ? Accessibility : spot.kind === 'ev' ? Zap : null
 
   return (
     <button
       type="button"
-      disabled={!available}
+      disabled={!isAvail}
       onClick={onSelect}
-      aria-label={
-        available
-          ? `Spot ${spot.label} available, tap to book`
-          : `Spot ${spot.label} occupied`
-      }
       className={cn(
         'relative flex h-16 w-9 flex-col items-center justify-center rounded-md border-t-2 text-[9px] font-medium transition-all duration-200',
         flashing && 'animate-spot-flash',
-        available
-          ? 'cursor-pointer border-primary bg-primary/20 text-primary hover:bg-primary/35 hover:shadow-[0_0_12px_-2px_var(--primary)] active:scale-95'
+        isAvail
+          ? 'cursor-pointer border-primary bg-primary/20 text-primary hover:bg-primary/35'
+          : isAnomaly
+          ? 'cursor-not-allowed border-yellow-500 bg-yellow-500/20 text-yellow-500'
           : 'cursor-not-allowed border-occupied bg-occupied/25 text-occupied-foreground',
       )}
     >
-      {available ? (
+      {isAvail ? (
         <>
           {KindIcon ? (
             <KindIcon size={14} aria-hidden="true" />
@@ -114,6 +113,8 @@ function SpotCell({
           )}
           <span className="mt-1 font-mono tabular-nums">{spot.label}</span>
         </>
+      ) : isAnomaly ? (
+        <AlertTriangle size={16} />
       ) : (
         <Car size={16} className="opacity-70" aria-hidden="true" />
       )}
@@ -123,9 +124,9 @@ function SpotCell({
 
 function Legend({ className, label }: { className: string; label: string }) {
   return (
-    <span className="flex items-center gap-1">
-      <span className={cn('size-2.5 rounded-[3px]', className)} aria-hidden="true" />
-      {label}
-    </span>
+    <div className="flex items-center gap-1">
+      <span className={cn('size-2.5 rounded-sm border', className)} aria-hidden="true" />
+      <span>{label}</span>
+    </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -8,7 +8,7 @@ import type { ParkingLot as ApiParkingLot, SpotAvailability, SpotStatusEvent } f
 import { LotPin } from './v0/lot-pin';
 
 const AVAILABILITY_QUERY = gql`
-  query GetAvailability($lotId: ID!, $from: String!, $to: String!) {
+  query GetMapAvailability($lotId: ID!, $from: String!, $to: String!) {
     availability(lotId: $lotId, from: $from, to: $to) {
       spotId
       isAvailable
@@ -17,7 +17,7 @@ const AVAILABILITY_QUERY = gql`
 `;
 
 const SPOT_STATUS_SUBSCRIPTION = gql`
-  subscription OnSpotStatusChanged($lotId: ID!) {
+  subscription OnMapSpotStatusChanged($lotId: ID!) {
     spotStatusChanged(lotId: $lotId) {
       spotId
       status
@@ -39,25 +39,20 @@ interface MapOverviewProps {
   onSelectLot: (lot: ApiParkingLot) => void;
 }
 
-// A helper to generate a custom icon using the v0 LotPin component
 function createCustomIcon(lot: ApiParkingLot, active: boolean, total: number, free: number) {
-  // We mock a v0 ParkingLot just for the LotPin to render correctly.
   const mockV0Lot = {
     id: lot.id,
     name: lot.name,
     address: lot.address,
-    distanceKm: 1.0,
+    distanceKm: 0,
     hourlyRate: lot.hourlyRate || 0,
     x: 0,
     y: 0,
-    // Provide an empty array for rows, but mock the total/free via lotStats by overriding it?
-    // Wait, lotStats in v0 lot-pin computes total/free from rows! 
-    // We must pass spots to it, or we can just mock rows with the correct length and status.
     rows: [
       {
         id: 'A',
         letter: 'A',
-        spots: Array(total).fill(null).map((_, i) => ({
+        spots: Array(Math.max(total, 1)).fill(null).map((_, i) => ({
           id: `A${i}`,
           label: `A${i}`,
           status: i < free ? 'available' : 'occupied',
@@ -70,24 +65,35 @@ function createCustomIcon(lot: ApiParkingLot, active: boolean, total: number, fr
 
   const html = renderToString(
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* We strip the absolute positioning from LotPin for Leaflet */}
       <LotPin lot={mockV0Lot} active={active} onSelect={() => {}} />
     </div>
   );
 
   return L.divIcon({
-    html: html,
-    className: 'custom-leaflet-pin', // transparent background
-    iconSize: [100, 40],
-    iconAnchor: [50, 40], // anchor at the bottom center of the pin
+    html,
+    className: 'custom-leaflet-pin',
+    iconSize: [120, 48],
+    iconAnchor: [60, 48],
   });
 }
 
-function LotMarker({ lot, selectedLot, onSelectLot }: { lot: ApiParkingLot, selectedLot: ApiParkingLot | null, onSelectLot: (l: ApiParkingLot) => void }) {
-  const [{ from, to }] = useState(() => ({
-    from: new Date().toISOString(),
-    to: new Date(new Date().getTime() + 2 * 60 * 60 * 1000).toISOString()
-  }));
+function LotMarker({
+  lot,
+  selectedLot,
+  onSelectLot,
+}: {
+  lot: ApiParkingLot;
+  selectedLot: ApiParkingLot | null;
+  onSelectLot: (l: ApiParkingLot) => void;
+}) {
+  const markerRef = useRef<L.Marker>(null);
+
+  const [{ from, to }] = useState(() => {
+    const f = new Date();
+    f.setSeconds(0, 0);
+    const t = new Date(f.getTime() + 2 * 60 * 60 * 1000);
+    return { from: f.toISOString(), to: t.toISOString() };
+  });
 
   const [{ data }] = useQuery({
     query: AVAILABILITY_QUERY,
@@ -108,25 +114,27 @@ function LotMarker({ lot, selectedLot, onSelectLot }: { lot: ApiParkingLot, sele
       if (response.spotStatusChanged) {
         const event = response.spotStatusChanged as SpotStatusEvent;
         const isAvail = event.status === 'FREE';
-        setLiveSpots(prev => prev.map(spot => 
-          spot.spotId === event.spotId 
-            ? { ...spot, isAvailable: isAvail } 
-            : spot
-        ));
+        setLiveSpots(prev =>
+          prev.map(spot =>
+            spot.spotId === event.spotId ? { ...spot, isAvailable: isAvail } : spot
+          )
+        );
       }
       return response;
     }
   );
 
   const total = liveSpots.length;
-  const free = liveSpots.filter(s => s.isAvailable).length;
+  const free  = liveSpots.filter(s => s.isAvailable).length;
   const isActive = selectedLot?.id === lot.id;
 
-  // Render a fallback icon while loading
-  const icon = total > 0 ? createCustomIcon(lot, isActive, total, free) : createCustomIcon(lot, isActive, 1, 1);
+  const icon = useMemo(() => {
+    return createCustomIcon(lot, isActive, Math.max(total, 1), free);
+  }, [lot, isActive, total, free]);
 
   return (
     <Marker
+      ref={markerRef}
       position={[lot.latitude, lot.longitude]}
       icon={icon}
       eventHandlers={{
@@ -139,13 +147,16 @@ function LotMarker({ lot, selectedLot, onSelectLot }: { lot: ApiParkingLot, sele
 export function MapOverview({ lots, selectedLot, onSelectLot }: MapOverviewProps) {
   const center: [number, number] = [50.4501, 30.5234]; // Kyiv
 
+  // Only show ACTIVE parking lots on the map (filter out CLOSED ones)
+  const openLots = lots.filter(lot => lot.status === 'ACTIVE');
+
   return (
     <div className="w-full h-full z-0 bg-background">
       <MapContainer
         center={center}
         zoom={13}
         className="w-full h-full"
-        zoomControl={false}
+        zoomControl={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -153,7 +164,7 @@ export function MapOverview({ lots, selectedLot, onSelectLot }: MapOverviewProps
           subdomains="abcd"
           maxZoom={19}
         />
-        {lots.map((lot) => (
+        {openLots.map((lot) => (
           <LotMarker
             key={lot.id}
             lot={lot}

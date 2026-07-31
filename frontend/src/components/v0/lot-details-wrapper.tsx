@@ -14,6 +14,8 @@ const AVAILABILITY_QUERY = gql`
       isAvailable
       layoutX
       layoutY
+      bookedUntil
+      isAnomaly
     }
   }
 `;
@@ -28,47 +30,70 @@ const SPOT_STATUS_SUBSCRIPTION = gql`
   }
 `;
 
+function makeDefaultRange() {
+  // Default window: now → now + 2h, rounded to the current minute
+  const from = new Date();
+  from.setSeconds(0, 0);
+  const to = new Date(from.getTime() + 2 * 60 * 60 * 1000);
+  return { fromIso: from.toISOString(), toIso: to.toISOString() };
+}
+
 export function LotDetailsPanelWrapper({
   apiLot,
   onClose,
   onSelectSpot,
+  bookedSpotId,
 }: {
   apiLot: ApiParkingLot;
   onClose: () => void;
   onSelectSpot: (spot: Spot, lot: V0ParkingLot) => void;
+  /** Spot ID that was just successfully booked — triggers optimistic occupied state */
+  bookedSpotId?: string | null;
 }) {
-  const [{ from, to }] = useState(() => ({
-    from: new Date().toISOString(),
-    to: new Date(new Date().getTime() + 2 * 60 * 60 * 1000).toISOString()
-  }));
+  const [{ fromIso, toIso }, setRange] = useState(makeDefaultRange);
 
+  // Re-fetch availability whenever time range changes.
+  // requestPolicy is 'network-only' (set at client level, no cacheExchange).
   const [{ data }] = useQuery({
     query: AVAILABILITY_QUERY,
-    variables: { lotId: apiLot.id, from, to },
+    variables: { lotId: apiLot.id, from: fromIso, to: toIso },
   });
 
   const [liveSpots, setLiveSpots] = useState<SpotAvailability[]>([]);
   const [flashing, setFlashing] = useState<Set<string>>(new Set());
 
+  // Sync GraphQL result into local live state
   useEffect(() => {
     if (data?.availability) {
       setLiveSpots(data.availability);
     }
   }, [data]);
 
+  // Optimistically mark a spot as occupied immediately after booking —
+  // the real-time update from the sensor simulator will follow shortly.
+  useEffect(() => {
+    if (!bookedSpotId) return;
+    setLiveSpots(prev =>
+      prev.map(s => (s.spotId === bookedSpotId ? { ...s, isAvailable: false } : s))
+    );
+  }, [bookedSpotId]);
+
+  // Real-time subscription: update individual spot availability on sensor events
   useSubscription(
     { query: SPOT_STATUS_SUBSCRIPTION, variables: { lotId: apiLot.id } },
     (_, response) => {
       if (response.spotStatusChanged) {
         const event = response.spotStatusChanged as SpotStatusEvent;
+        // Sensor status 'FREE' means the spot is physically unoccupied and bookable
         const isAvail = event.status === 'FREE';
-        
-        setLiveSpots(prev => prev.map(spot => 
-          spot.spotId === event.spotId 
-            ? { ...spot, isAvailable: isAvail } 
-            : spot
-        ));
-        
+
+        setLiveSpots(prev =>
+          prev.map(spot =>
+            spot.spotId === event.spotId ? { ...spot, isAvailable: isAvail } : spot
+          )
+        );
+
+        // Trigger the flash ring animation on the changed spot
         setFlashing(new Set([`${apiLot.id}:${event.spotId}`]));
         setTimeout(() => setFlashing(new Set()), 900);
       }
@@ -82,6 +107,10 @@ export function LotDetailsPanelWrapper({
     <LotDetailsPanel
       lot={v0Lot}
       flashing={flashing}
+      fromIso={fromIso}
+      toIso={toIso}
+      onFromChange={(iso) => setRange(r => ({ ...r, fromIso: iso }))}
+      onToChange={(iso) => setRange(r => ({ ...r, toIso: iso }))}
       onClose={onClose}
       onSelectSpot={(spot) => onSelectSpot(spot, v0Lot)}
     />
