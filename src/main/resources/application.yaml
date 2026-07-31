@@ -59,3 +59,7 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+jwt:
+  secret: ${JWT_SECRET:your_super_secret_jwt_key_that_is_at_least_256_bits_long}
+  expiration: ${JWT_EXPIRATION:86400000}

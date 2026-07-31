@@ -9,6 +9,36 @@ const CLIENT_SIM_INTERVAL_MS = parseInt(process.env.CLIENT_SIM_INTERVAL_MS || '1
 
 const STATUSES = ['FREE', 'OCCUPIED', 'UNKNOWN'];
 let allSpots = []; // Will store { id, lotId, status, lastUpdate }
+let authToken = null; // JWT token
+
+// Authenticate emulator
+async function authenticate() {
+    console.log('Authenticating emulator...');
+    try {
+        const credentials = {
+            email: 'emulator@parkflow.com',
+            password: 'password',
+            fullName: 'Sensor Emulator',
+            phone: '+380990000000'
+        };
+        // Try to register
+        try {
+            await axios.post(`${API_BASE_URL}/auth/register`, credentials);
+        } catch (e) {
+            // Ignore if already exists
+        }
+        // Login
+        const res = await axios.post(`${API_BASE_URL}/auth/login`, {
+            email: credentials.email,
+            password: credentials.password
+        });
+        authToken = res.data.token;
+        console.log('Emulator authenticated successfully.');
+    } catch (error) {
+        console.error('Failed to authenticate emulator. Retrying in 5s...', error.message);
+        setTimeout(authenticate, 5000);
+    }
+}
 
 // Initialize: Fetch all spots
 async function fetchAllSpots() {
@@ -107,7 +137,8 @@ async function simulateClientBookings() {
         try {
             await axios.post(`${API_BASE_URL}/reservations`, payload, {
                 headers: {
-                    'Idempotency-Key': uuidv4()
+                    'Idempotency-Key': uuidv4(),
+                    'Authorization': `Bearer ${authToken}`
                 }
             });
             console.log(`[${new Date().toISOString()}] Client successfully booked spot ${spot.spotId} (${payload.licensePlate})`);
@@ -130,7 +161,9 @@ async function simulateClientBookings() {
 }
 
 // Start Simulator
-fetchAllSpots().then(() => {
-    setInterval(sendSensorBatch, BATCH_INTERVAL_MS);
-    setInterval(simulateClientBookings, CLIENT_SIM_INTERVAL_MS);
+authenticate().then(() => {
+    fetchAllSpots().then(() => {
+        setInterval(sendSensorBatch, BATCH_INTERVAL_MS);
+        setInterval(simulateClientBookings, CLIENT_SIM_INTERVAL_MS);
+    });
 });
