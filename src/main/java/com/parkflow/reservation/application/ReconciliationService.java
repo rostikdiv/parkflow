@@ -45,7 +45,7 @@ public class ReconciliationService {
     }
 
     // See plan §10
-    @Scheduled(fixedDelay = 120000) // Every 2 minutes
+    @Scheduled(fixedDelay = 30000) // Every 30 seconds
     public void runReconciliation() {
         log.info("Starting reconciliation job");
         Instant now = Instant.now();
