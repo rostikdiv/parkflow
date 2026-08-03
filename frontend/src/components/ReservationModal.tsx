@@ -88,7 +88,7 @@ export function ReservationModal({ spot, lot, onClose, onSuccess }: ReservationM
               <input 
                 type="text"
                 required
-                pattern="^[A-Z]{2}\d{4}[A-Z]{2}$"
+                pattern="^[A-Za-zА-Яа-яІіЇїЄєҐґ0-9 -]{3,8}$"
                 placeholder="AA1234BC"
                 value={licensePlate}
                 onChange={e => setLicensePlate(e.target.value)}

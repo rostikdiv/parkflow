@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { X, CalendarDays, AlertTriangle, ShieldCheck, CheckCircle2, ChevronDown, MapPin, Building2, Filter, CheckCircle, AlertCircle } from 'lucide-react'
+import { X, CalendarDays, AlertTriangle, ShieldCheck, CheckCircle2, ChevronDown, MapPin, Building2, Filter, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '../../lib/auth'
 import { TimeRangePicker } from './time-range-picker'
@@ -87,34 +87,34 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const totalResPages = Math.ceil(finalReservations.length / size) || 1;
   const totalAnomPages = Math.ceil(finalAnomalies.length / size) || 1;
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true)
-      try {
-        const [resResp, anomResp] = await Promise.all([
-          fetch(`/api/admin/v1/reservations?page=0&size=1000`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          fetch('/api/admin/v1/anomalies?resolved=true', {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ])
+  const fetchData = async () => {
+    setLoading(true)
+    try {
+      const [resResp, anomResp] = await Promise.all([
+        fetch(`/api/admin/v1/reservations?page=0&size=1000`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch('/api/admin/v1/anomalies?resolved=true', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ])
 
-        if (resResp.ok) {
-          const resData: Page<AdminReservationResponse> = await resResp.json()
-          setAllReservations(resData.content)
-        }
-        if (anomResp.ok) {
-          const anomData: SpotAnomalyResponse[] = await anomResp.json()
-          setAnomalies(anomData)
-        }
-      } catch (e) {
-        console.error('Failed to fetch admin data', e)
-      } finally {
-        setLoading(false)
+      if (resResp.ok) {
+        const resData: Page<AdminReservationResponse> = await resResp.json()
+        setAllReservations(resData.content)
       }
+      if (anomResp.ok) {
+        const anomData: SpotAnomalyResponse[] = await anomResp.json()
+        setAnomalies(anomData)
+      }
+    } catch (e) {
+      console.error('Failed to fetch admin data', e)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     if (token) fetchData()
   }, [token])
 
@@ -168,8 +168,17 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           </div>
           <button
             type="button"
+            onClick={() => token && fetchData()}
+            className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+            title="Refresh"
+          >
+            <RefreshCw size={18} className={cn(loading && "animate-spin")} />
+          </button>
+          <button
+            type="button"
             onClick={onClose}
             className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+            title="Close"
           >
             <X size={18} />
           </button>

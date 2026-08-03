@@ -6,7 +6,7 @@ import { Loader2, CircleParking, Minus, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ParkingLot, Spot } from '@/lib/parking'
 
-const PLATE_RE = /^[A-Z]{2}\d{4}[A-Z]{2}$/
+const PLATE_RE = /^[A-Za-zА-Яа-яІіЇїЄєҐґ0-9 -]{3,8}$/
 
 export function BookingDialog({
   open,
