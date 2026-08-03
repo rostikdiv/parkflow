@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://parkflow-backend-258044247462.us-central1.run.app/api/$1"
+    },
+    {
+      "source": "/graphql",
+      "destination": "https://parkflow-backend-258044247462.us-central1.run.app/graphql"
+    },
+    {
+      "source": "/actuator/(.*)",
+      "destination": "https://parkflow-backend-258044247462.us-central1.run.app/actuator/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -33,10 +33,9 @@ function ColdStartOverlay() {
   const [error, setError] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
 
-  // Use the env variable or fallback to relative path (which goes through Vite proxy)
-  const healthUrl = import.meta.env.VITE_API_BASE_URL 
-    ? `${import.meta.env.VITE_API_BASE_URL}/actuator/health`
-    : '/actuator/health';
+  // Always use relative path. 
+  // In dev, Vite Proxy forwards it. In prod, Vercel Rewrites forwards it.
+  const healthUrl = '/actuator/health';
 
   useEffect(() => {
     // Only show the overlay if the server takes longer than 1.5s to respond

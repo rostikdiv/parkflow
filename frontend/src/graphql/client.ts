@@ -3,10 +3,9 @@ import { createClient as createWSClient } from 'graphql-ws';
 import { getStoredToken } from '../lib/auth';
 
 const wsClient = createWSClient({
-  // Connect directly to the backend in dev — more reliable than proxying WebSockets.
   url: import.meta.env.DEV
     ? 'ws://localhost:8080/graphql-ws'
-    : `ws://${window.location.host}/graphql-ws`,
+    : import.meta.env.VITE_WS_URL || `wss://${window.location.host}/graphql-ws`,
   lazy: true,
   connectionParams: () => {
     const token = getStoredToken();
