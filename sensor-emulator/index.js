@@ -82,13 +82,13 @@ async function sendSensorBatch() {
         const spotIndex = Math.floor(Math.random() * allSpots.length);
         const spot = allSpots[spotIndex];
 
-        // 5% chance to simulate a broken sensor (don't update it)
-        if (Math.random() < 0.05) {
+        // 1% chance to simulate a broken sensor (don't update it)
+        if (Math.random() < 0.01) {
             continue; 
         }
 
-        // 20% chance to change status, otherwise keep it
-        if (Math.random() < 0.2) {
+        // 0.05% chance to change status randomly per tick (simulates unbooked cars parking, creates OCCUPIED_WITHOUT_RESERVATION anomaly)
+        if (Math.random() < 0.0005) {
             spot.status = STATUSES[Math.floor(Math.random() * 2)]; // Only FREE or OCCUPIED (UNKNOWN is set by backend)
         }
 
@@ -124,14 +124,44 @@ async function simulateClientBookings() {
         const spot = allSpots[Math.floor(Math.random() * allSpots.length)];
         
         const now = new Date();
-        const fromTimeObj = new Date(now.getTime() + 60 * 1000); // from 1 minute in future
-        const toTimeObj = new Date(fromTimeObj.getTime() + 60 * 60 * 1000); // 1 hour duration
+        const rand = Math.random();
+        
+        let offsetMs;
+        if (rand < 0.2) {
+            // 20% chance: tomorrow (24 to 48 hours in the future)
+            offsetMs = (24 * 60 * 60 * 1000) + Math.floor(Math.random() * 24 * 60 * 60 * 1000);
+        } else if (rand < 0.5) {
+            // 30% chance: later today (1 to 5 hours in the future)
+            offsetMs = (1 * 60 * 60 * 1000) + Math.floor(Math.random() * 4 * 60 * 60 * 1000);
+        } else {
+            // 50% chance: almost immediately (1 to 5 minutes in the future)
+            offsetMs = Math.floor(Math.random() * 5 * 60 * 1000) + (1 * 60 * 1000);
+        }
+
+        const fromTimeObj = new Date(now.getTime() + offsetMs);
+        
+        // Random duration between 30 minutes and 3 hours
+        const durationMs = (30 * 60 * 1000) + Math.floor(Math.random() * 2.5 * 60 * 60 * 1000);
+        const toTimeObj = new Date(fromTimeObj.getTime() + durationMs);
+
+        // Generate standard (e.g. AA1234BB) or custom (e.g. VIP1) Ukrainian plate
+        const isCustom = Math.random() < 0.2;
+        let generatedPlate;
+        if (isCustom) {
+            generatedPlate = 'SIM' + Math.floor(Math.random() * 99999).toString();
+        } else {
+            const plateLetters = ['AA', 'BC', 'KA', 'CE', 'AI'];
+            const randomPrefix = plateLetters[Math.floor(Math.random() * plateLetters.length)];
+            const randomSuffix = plateLetters[Math.floor(Math.random() * plateLetters.length)];
+            const randomNumbers = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+            generatedPlate = `${randomPrefix}${randomNumbers}${randomSuffix}`;
+        }
 
         const payload = {
             spotId: spot.spotId,
             from: fromTimeObj.toISOString(),
             to: toTimeObj.toISOString(),
-            licensePlate: 'SIM' + Math.floor(Math.random() * 9999).toString().padStart(4, '0')
+            licensePlate: generatedPlate
         };
 
         try {
@@ -143,12 +173,21 @@ async function simulateClientBookings() {
             });
             console.log(`[${new Date().toISOString()}] Client successfully booked spot ${spot.spotId} (${payload.licensePlate})`);
             
-            // Introduce intentional anomaly: 30% chance the "car" actually arrives and triggers the sensor to OCCUPIED
-            if (Math.random() < 0.3) {
-                setTimeout(() => {
-                    spot.status = 'OCCUPIED';
-                    console.log(`[Simulator] Car ${payload.licensePlate} physically arrived at ${spot.spotId}`);
-                }, 10000); // arrives after 10 seconds
+            // Only schedule physical arrival if the booking is happening within the next 2 hours
+            // (to avoid keeping thousands of setTimeouts in memory for tomorrow's bookings)
+            if (offsetMs < 2 * 60 * 60 * 1000) {
+                // Normal behavior: 98% chance the "car" actually arrives around the start time.
+                // 2% chance it's a no-show (creates RESERVED_BUT_EMPTY anomaly)
+                if (Math.random() < 0.98) {
+                    // Car arrives slightly before or after the booking starts (offsetMs +/- 30 seconds)
+                    let arrivalDelay = offsetMs + (Math.random() * 60000 - 30000);
+                    arrivalDelay = Math.max(0, arrivalDelay); // Execute immediately if negative
+                    
+                    setTimeout(() => {
+                        spot.status = 'OCCUPIED';
+                        console.log(`[Simulator] Car ${payload.licensePlate} physically arrived at ${spot.spotId}`);
+                    }, arrivalDelay);
+                }
             }
 
         } catch (e) {
