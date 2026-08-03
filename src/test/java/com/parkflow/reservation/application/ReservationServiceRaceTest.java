@@ -22,7 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
 @ActiveProfiles("test")
+@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
 @org.springframework.context.annotation.Import(com.parkflow.TestcontainersConfiguration.class)
 class ReservationServiceRaceTest {
 

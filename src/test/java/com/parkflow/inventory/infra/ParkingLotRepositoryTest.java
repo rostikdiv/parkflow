@@ -14,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
 @org.springframework.context.annotation.Import(com.parkflow.TestcontainersConfiguration.class)
 class ParkingLotRepositoryTest {
 

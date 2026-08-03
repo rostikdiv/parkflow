@@ -9,3 +9,7 @@ spring:
 logging:
   level:
     org.hibernate.SQL: info
+
+jwt:
+  secret: "testsecret_verylongrandomsecretstringwithatleast32bytesforhs256"
+  expiration: 3600000

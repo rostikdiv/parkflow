@@ -20,7 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
+@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
 @ActiveProfiles("test")
+@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
 @org.springframework.context.annotation.Import(com.parkflow.TestcontainersConfiguration.class)
 class SensorEventConsumerTest {
 

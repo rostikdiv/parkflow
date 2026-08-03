@@ -20,8 +20,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
 @org.springframework.context.annotation.Import(com.parkflow.TestcontainersConfiguration.class)
 class AdminAnomalyControllerSecurityTest {
 
