@@ -1,0 +1,12 @@
+#cloud-config
+
+# This file tells the Virtual Machine what to do during boot time.
+# Since we are using Container-Optimized OS (by Google),
+# Docker is already installed. We just need to start Redis and RabbitMQ.
+
+runcmd:
+  # Start Redis container
+  - docker run -d --name redis --restart=always -p 6379:6379 redis:alpine
+  
+  # Start RabbitMQ container with parkflow user
+  - docker run -d --name rabbitmq --restart=always -p 5672:5672 -e RABBITMQ_DEFAULT_USER=parkflow -e RABBITMQ_DEFAULT_PASS=parkflow rabbitmq:3-management-alpine

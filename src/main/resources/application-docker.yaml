@@ -1,0 +1,38 @@
+spring:
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://parkflow-postgres:5432/parkflow}
+    username: ${POSTGRES_USER:parkflow}
+    password: ${POSTGRES_PASSWORD:secret}
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:parkflow-rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+  mail:
+    host: ${MAIL_HOST:parkflow-mailhog}
+    port: 1025
+
+parkflow:
+  emulator:
+    url: http://parkflow-sensor-emulator:8080
+
+  data:
+    redis:
+      host: ${REDIS_HOST:parkflow-redis}
+      port: ${REDIS_PORT:6379}
+
+management:
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_URL:http://parkflow-zipkin:9411/api/v2/spans}

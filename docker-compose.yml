@@ -51,10 +51,14 @@ services:
   sensor-emulator:
     build: ./sensor-emulator
     container_name: parkflow-sensor-emulator
+    ports:
+      - "8081:8080"
     environment:
-      API_URL: http://host.docker.internal:8080/api/internal/v1/sensor-events
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      API_BASE_URL: http://parkflow-backend:8080/api/v1
+      INTERNAL_API_URL: http://parkflow-backend:8080/api/internal/v1/sensor-events
+      AUTO_START: 'true'
+    depends_on:
+      - parkflow-backend
 
   mailhog:
     image: mailhog/mailhog
@@ -91,6 +95,26 @@ services:
     container_name: parkflow-zipkin
     ports:
       - "9411:9411"
+
+  parkflow-backend:
+    build: .
+    container_name: parkflow-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - POSTGRES_URL=jdbc:postgresql://parkflow-postgres:5432/parkflow
+      - REDIS_HOST=parkflow-redis
+      - RABBITMQ_HOST=parkflow-rabbitmq
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   postgres-data:
