@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, gql } from 'urql';
 import { MapOverview } from './components/MapOverview';
 import { AppLayout } from './components/v0/app-layout';
@@ -27,6 +27,82 @@ const PARKING_LOTS_QUERY = gql`
     }
   }
 `;
+
+function ColdStartOverlay() {
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
+
+  // Use the env variable or fallback to relative path (which goes through Vite proxy)
+  const healthUrl = import.meta.env.VITE_API_BASE_URL 
+    ? `${import.meta.env.VITE_API_BASE_URL}/actuator/health`
+    : '/actuator/health';
+
+  useEffect(() => {
+    // Only show the overlay if the server takes longer than 1.5s to respond
+    const showTimeoutId = setTimeout(() => setShowOverlay(true), 1500);
+
+    let pingTimeoutId: ReturnType<typeof setTimeout>;
+    
+    const pingServer = async () => {
+      try {
+        const [resHealth, resEmulator] = await Promise.all([
+          fetch(healthUrl),
+          fetch('/api/v1/emulator/status')
+        ]);
+        
+        if (resHealth.ok && resEmulator.ok) {
+          setIsReady(true);
+          clearTimeout(showTimeoutId);
+          return;
+        }
+      } catch (e) {
+        // Ignore and retry
+      }
+      
+      // Retry after 2 seconds
+      pingTimeoutId = setTimeout(pingServer, 2000);
+    };
+
+    pingServer();
+    
+    // Fallback: if server doesn't wake up in 15 seconds, show error/continue anyway
+    const fallbackTimeout = setTimeout(() => {
+      if (!isReady) {
+        setError(true);
+        setTimeout(() => setIsReady(true), 3000); // Let them in after showing error
+      }
+    }, 15000);
+
+    return () => {
+      clearTimeout(showTimeoutId);
+      clearTimeout(pingTimeoutId);
+      clearTimeout(fallbackTimeout);
+    };
+  }, [healthUrl]);
+
+  if (isReady || !showOverlay) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background text-foreground transition-opacity duration-1000">
+      <div className="relative flex flex-col items-center">
+        {/* Pulsing ring */}
+        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping"></div>
+        {/* Logo or Icon */}
+        <div className="relative z-10 w-24 h-24 mb-6 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+          <svg className="w-12 h-12 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+          </svg>
+        </div>
+        
+        <h2 className="text-2xl font-bold mb-2 tracking-tight">Waking up the cloud</h2>
+        <p className="text-muted-foreground animate-pulse">
+          {error ? "Taking longer than expected..." : "Please wait a moment. The server is warming up."}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function AppContent() {
   const { isAuthenticated, token } = useAuth();
@@ -191,6 +267,7 @@ function App() {
   return (
     <AuthProvider>
       <SnackbarProvider>
+        <ColdStartOverlay />
         <AppContent />
       </SnackbarProvider>
     </AuthProvider>

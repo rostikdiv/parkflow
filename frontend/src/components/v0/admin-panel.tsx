@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { X, CalendarDays, AlertTriangle, ShieldCheck, CheckCircle2, ChevronDown, MapPin, Building2, Filter, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react'
+import { X, CalendarDays, AlertTriangle, ShieldCheck, CheckCircle2, ChevronDown, MapPin, Building2, Filter, CheckCircle, AlertCircle, RefreshCw, Play, Square } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '../../lib/auth'
 import { TimeRangePicker } from './time-range-picker'
@@ -19,6 +19,10 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [allReservations, setAllReservations] = useState<AdminReservationResponse[]>([])
   const [anomalies, setAnomalies] = useState<SpotAnomalyResponse[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Emulator state
+  const [isEmulatorRunning, setIsEmulatorRunning] = useState(false)
+  const [emulatorStatusLoading, setEmulatorStatusLoading] = useState(false)
 
   // Pagination state
   const [resPage, setResPage] = useState(0)
@@ -91,7 +95,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
     setLoading(true)
     try {
       const [resResp, anomResp] = await Promise.all([
-        fetch(`/api/admin/v1/reservations?page=0&size=1000`, {
+        fetch(`/api/admin/v1/reservations?page=0&size=1000&sort=startTime,desc`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         fetch('/api/admin/v1/anomalies?resolved=true', {
@@ -114,8 +118,49 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
     }
   }
 
+  const fetchEmulatorStatus = async () => {
+    try {
+      // Proxy through backend
+      const resp = await fetch(`/api/v1/emulator/status`);
+      if (resp.ok) {
+        const data = await resp.json();
+        setIsEmulatorRunning(data.isRunning);
+      }
+    } catch (e) {
+      console.warn('Emulator not reachable', e);
+    }
+  }
+
+  const toggleEmulator = async () => {
+    setEmulatorStatusLoading(true);
+    try {
+      const endpoint = isEmulatorRunning ? '/api/v1/emulator/stop' : '/api/v1/emulator/start';
+      const resp = await fetch(endpoint, { 
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (resp.ok) {
+        setIsEmulatorRunning(!isEmulatorRunning);
+      }
+    } catch (e) {
+      console.error('Failed to toggle emulator', e);
+    } finally {
+      setEmulatorStatusLoading(false);
+    }
+  }
+
   useEffect(() => {
-    if (token) fetchData()
+    if (token) {
+      fetchData()
+      fetchEmulatorStatus()
+
+      // Poll emulator status periodically
+      const intervalId = setInterval(() => {
+        fetchEmulatorStatus()
+      }, 5000);
+
+      return () => clearInterval(intervalId);
+    }
   }, [token])
 
   const resolveAnomaly = async (id: string) => {
@@ -183,6 +228,28 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             <X size={18} />
           </button>
         </header>
+
+        <div className="px-5 pb-3">
+          <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/20 p-3">
+            <div>
+              <p className="text-sm font-semibold">Sensor Emulator</p>
+              <p className="text-xs text-muted-foreground">Generate fake bookings and sensor events</p>
+            </div>
+            <button
+              onClick={toggleEmulator}
+              disabled={emulatorStatusLoading}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50",
+                isEmulatorRunning 
+                  ? "bg-red-500/20 text-red-600 dark:text-red-500 hover:bg-red-500/30" 
+                  : "bg-green-500/20 text-green-600 dark:text-green-500 hover:bg-green-500/30"
+              )}
+            >
+              {isEmulatorRunning ? <Square size={14} /> : <Play size={14} />}
+              {isEmulatorRunning ? "Stop" : "Start"}
+            </button>
+          </div>
+        </div>
 
         <div className="flex flex-col gap-3 px-5 pb-2">
           <div>
