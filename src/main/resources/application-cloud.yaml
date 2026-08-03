@@ -19,7 +19,7 @@ spring:
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
     ssl:
-      enabled: true
+      enabled: false
 
 parkflow:
   emulator:
