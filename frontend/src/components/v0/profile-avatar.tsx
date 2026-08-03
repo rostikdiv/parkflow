@@ -43,7 +43,6 @@ export function ProfileAvatar({ onOpenReservations, onOpenProfile, onOpenAdmin }
         onOpenReservations={onOpenReservations}
         onOpenProfile={onOpenProfile}
         onOpenAdmin={onOpenAdmin}
-        toggleRef={toggleRef}
       />
     </div>
   )

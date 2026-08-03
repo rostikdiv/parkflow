@@ -73,7 +73,7 @@ export function MapView({
           </div>
           <SearchBar value={query} onChange={onQueryChange} />
         </div>
-        <ProfileAvatar />
+        <ProfileAvatar onOpenReservations={() => {}} onOpenProfile={() => {}} onOpenAdmin={() => {}} />
       </header>
 
       {/* Zoom controls (FAB group) */}

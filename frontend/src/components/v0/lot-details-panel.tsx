@@ -1,6 +1,6 @@
 'use client'
 
-import { X, MapPin, Navigation2, CircleParking, AlertTriangle } from 'lucide-react'
+import { X, MapPin, CircleParking, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { lotStats, type ParkingLot, type Spot } from '@/lib/parking'
 import { TimeRangePicker } from './time-range-picker'

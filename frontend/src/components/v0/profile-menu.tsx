@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+// Removed unused React hooks
 import { LogOut, CalendarDays, User, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '../../lib/auth'
@@ -11,10 +11,10 @@ interface ProfileMenuProps {
   onOpenReservations: () => void
   onOpenProfile: () => void
   onOpenAdmin: () => void
-  toggleRef: React.RefObject<HTMLButtonElement | null>
+  // toggleRef removed
 }
 
-export function ProfileMenu({ open, onClose, onOpenReservations, onOpenProfile, onOpenAdmin, toggleRef }: ProfileMenuProps) {
+export function ProfileMenu({ open, onClose, onOpenReservations, onOpenProfile, onOpenAdmin }: ProfileMenuProps) {
   const { user, logout } = useAuth()
 
   console.log('ProfileMenu render. open:', open, 'user:', user?.email);

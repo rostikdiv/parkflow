@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { X, CalendarDays, AlertTriangle, ShieldCheck, CheckCircle2, ChevronDown, MapPin, Building2, Filter, CheckCircle, AlertCircle, RefreshCw, Play, Square } from 'lucide-react'
+import { X, CalendarDays, AlertTriangle, ShieldCheck, CheckCircle2, ChevronDown, Building2, Filter, CheckCircle, AlertCircle, RefreshCw, Play, Square } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '../../lib/auth'
 import { TimeRangePicker } from './time-range-picker'
