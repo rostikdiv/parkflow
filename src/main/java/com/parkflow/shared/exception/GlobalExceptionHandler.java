@@ -72,5 +72,13 @@ public class GlobalExceptionHandler {
         problemDetail.setType(URI.create("urn:parkflow:unauthorized"));
         return problemDetail;
     }
+
+    @ExceptionHandler(Exception.class)
+    public ProblemDetail handleAllOtherExceptions(Exception ex) {
+        log.error("Unhandled exception: ", ex);
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+        problemDetail.setType(URI.create("urn:parkflow:internal-error"));
+        return problemDetail;
+    }
 }
 

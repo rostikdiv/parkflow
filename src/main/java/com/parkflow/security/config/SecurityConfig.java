@@ -1,5 +1,6 @@
 package com.parkflow.security.config;
 
+import com.parkflow.security.api.filter.InternalApiKeyFilter;
 import com.parkflow.security.api.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +27,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final InternalApiKeyFilter internalApiKeyFilter;
     private final AuthenticationProvider authenticationProvider;
 
     @Bean
@@ -92,6 +94,7 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
+                .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
