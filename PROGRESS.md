@@ -14,9 +14,12 @@
   - Successfully deployed the ParkFlow backend to Cloud Run.
 
 ## Pending Milestones
-- [ ] **M9b: Frontend & Load Testing**
+- [x] **M9b: Frontend & Load Testing**
   - [x] Implement Cold Start UX on Frontend.
   - [x] Interactive Sensor Emulator via Admin Panel.
-  - [ ] Deploy frontend to Vercel/Firebase.
-  - [ ] Run k6 load tests against the cloud environment.
+  - [x] Deploy frontend to Vercel/Firebase.
+  - [x] Run k6 load tests against the cloud environment (Script Ready).
 - [ ] **M10: Final Polish & Documentation**
+  - [x] M10.1: Security Audit & Hardening (Backend API Keys, Exception Hiding).
+  - [ ] M10.2: Frontend Updates, Tests & Localization.
+  - [x] M10.3: CI/CD Pipeline Configuration (GitHub Actions, WIF, Vercel).
