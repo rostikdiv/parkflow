@@ -13,6 +13,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 
 import java.net.URI;
 import java.util.stream.Collectors;
@@ -70,6 +72,27 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleAuthenticationException(AuthenticationException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Authentication failed");
         problemDetail.setType(URI.create("urn:parkflow:unauthorized"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ProblemDetail handleMissingHeader(MissingRequestHeaderException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problemDetail.setType(URI.create("urn:parkflow:bad-request"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String message = ex.getMessage() == null ? "" : ex.getMessage();
+        if (message.contains("no_overlapping_reservations") || message.contains("conflicting key value")) {
+            ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Reservation conflicts with an existing reservation for the spot and time range.");
+            problemDetail.setType(URI.create("urn:parkflow:conflict"));
+            return problemDetail;
+        }
+        log.error("Database integrity violation: ", ex);
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected database error occurred");
+        problemDetail.setType(URI.create("urn:parkflow:internal-error"));
         return problemDetail;
     }
 
