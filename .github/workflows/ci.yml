@@ -135,28 +135,22 @@ jobs:
           image: 'us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/parkflow-repo/parkflow-backend:${{ github.sha }}'
 
   deploy-frontend:
-    needs: [build-frontend]
-    if: github.ref == 'refs/heads/main'
+    needs: changes
+    if: ${{ github.ref == 'refs/heads/main' && needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     environment: production
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    defaults:
-      run:
-        working-directory: ./frontend
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Project Dependencies
-        run: npm ci
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
       - name: Clean existing Vercel config
-        run: rm -rf .vercel ../.vercel
+        run: rm -rf .vercel frontend/.vercel
 
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
