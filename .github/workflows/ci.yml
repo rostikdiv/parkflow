@@ -137,5 +137,7 @@ jobs:
           service: 'parkflow-backend'
           region: 'us-central1'
           image: 'us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/parkflow-repo/parkflow-backend:${{ github.sha }}'
+          env_vars: |
+            SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=2
 
 
