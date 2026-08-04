@@ -98,7 +98,11 @@ jobs:
 
   deploy-backend:
     needs: [build-backend, terraform-check]
-    if: github.ref == 'refs/heads/main'
+    if: |
+      always() &&
+      needs.build-backend.result == 'success' &&
+      (needs.terraform-check.result == 'success' || needs.terraform-check.result == 'skipped') &&
+      github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     permissions:
