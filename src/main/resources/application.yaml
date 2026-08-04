@@ -69,3 +69,10 @@ management:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:86400000}
+
+resilience4j.ratelimiter:
+  instances:
+    authService:
+      limitForPeriod: 10
+      limitRefreshPeriod: 15m
+      timeoutDuration: 0s
