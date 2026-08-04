@@ -135,7 +135,7 @@ jobs:
           image: 'us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/parkflow-repo/parkflow-backend:${{ github.sha }}'
 
   deploy-frontend:
-    needs: changes
+    needs: [changes, build-frontend]
     if: ${{ github.ref == 'refs/heads/main' && needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     environment: production
