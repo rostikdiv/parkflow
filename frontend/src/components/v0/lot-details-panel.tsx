@@ -113,7 +113,7 @@ export function LotDetailsPanel({
             {isHistoryMode && (
               <div className="mb-3 rounded-lg bg-yellow-500/20 border border-yellow-500/30 px-3 py-2 text-xs font-medium text-yellow-600 dark:text-yellow-500 flex items-center gap-2">
                 <AlertTriangle size={14} />
-                Ви переглядаєте історію. Бронювання недоступне.
+                You are viewing history. Booking is unavailable.
               </div>
             )}
             <SpotGrid lot={lot} flashing={flashing} onSelectSpot={handleSelectSpot} />

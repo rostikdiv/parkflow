@@ -209,7 +209,7 @@ function AppContent() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500"></span>
             </span>
-            <span className="text-sm font-medium">Дані можуть бути застарілими</span>
+            <span className="text-sm font-medium">Data may be outdated</span>
           </div>
         )}
 

@@ -5,10 +5,14 @@ import { client } from './graphql/client'
 import App from './App.tsx'
 import './index.css'
 
+import { ErrorBoundary } from './components/ErrorBoundary'
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Provider value={client}>
-      <App />
-    </Provider>
+    <ErrorBoundary>
+      <Provider value={client}>
+        <App />
+      </Provider>
+    </ErrorBoundary>
   </StrictMode>,
 )

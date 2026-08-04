@@ -1,4 +1,4 @@
-import { Client, fetchExchange, subscriptionExchange } from 'urql';
+import { Client, fetchExchange, subscriptionExchange, errorExchange } from 'urql';
 import { createClient as createWSClient } from 'graphql-ws';
 import { getStoredToken } from '../lib/auth';
 
@@ -40,6 +40,13 @@ export const client = new Client({
     };
   },
   exchanges: [
+    errorExchange({
+      onError: (error, operation) => {
+        console.error(`GraphQL Error [${operation.kind}]:`, error);
+        // We log errors clearly to the console.
+        // Component-level error boundaries or useQuery error states will handle the UI.
+      },
+    }),
     fetchExchange,
     subscriptionExchange({
       forwardSubscription(request) {
