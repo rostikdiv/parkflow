@@ -4,7 +4,7 @@ import { getStoredToken } from '../lib/auth';
 
 let wsUrl = import.meta.env.DEV
   ? 'ws://localhost:8080/graphql-ws'
-  : import.meta.env.VITE_WS_URL || `wss://${window.location.host}/graphql-ws`;
+  : import.meta.env.VITE_WS_URL || 'wss://parkflow-backend-258044247462.us-central1.run.app/graphql-ws';
 
 if (wsUrl && !wsUrl.endsWith('/graphql-ws')) {
   wsUrl = wsUrl.replace(/\/$/, '') + '/graphql-ws';
