@@ -53,3 +53,5 @@ terraform/.terraform/
 
 # Terraform Secrets
 secrets.tfvars
+.vercel
+.env*

@@ -16,10 +16,12 @@ variable "db_password" {
   description = "Password for the Cloud SQL database"
   type        = string
   sensitive   = true
+  default     = "parkflow_db_password_2026_secure"
 }
 
 variable "jwt_secret" {
   description = "Secret key for JWT authentication"
   type        = string
   sensitive   = true
+  default     = "ParkflowSuperSecretKeyThatIsAtLeast32CharactersLong2026"
 }

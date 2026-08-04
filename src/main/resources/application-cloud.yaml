@@ -20,6 +20,9 @@ spring:
     password: ${RABBITMQ_PASSWORD}
     ssl:
       enabled: false
+    listener:
+      simple:
+        default-requeue-rejected: false
 
 parkflow:
   emulator:

@@ -39,11 +39,17 @@ resource "google_cloud_run_v2_service" "backend" {
         network    = var.vpc_network_name
         subnetwork = var.vpc_subnetwork_name
       }
-      egress = "ALL_TRAFFIC"
+      egress = "PRIVATE_RANGES_ONLY"
     }
 
     containers {
       image = "us-central1-docker.pkg.dev/${var.project_id}/parkflow-repo/parkflow-backend:latest"
+
+      resources {
+        limits = {
+          memory = "1024Mi"
+        }
+      }
 
       env {
         name  = "SPRING_PROFILES_ACTIVE"
@@ -104,6 +110,26 @@ resource "google_cloud_run_v2_service" "backend" {
       env {
         name  = "MANAGEMENT_TRACING_ENABLED"
         value = "false"
+      }
+
+      env {
+        name  = "MANAGEMENT_HEALTH_MAIL_ENABLED"
+        value = "false"
+      }
+
+      env {
+        name  = "EMULATOR_URL"
+        value = "https://parkflow-emulator-258044247462.us-central1.run.app"
+      }
+
+      env {
+        name  = "SPRING_RABBITMQ_LISTENER_SIMPLE_DEFAULT_REQUEUE_REJECTED"
+        value = "false"
+      }
+
+      env {
+        name  = "FORCE_RESTART"
+        value = "2"
       }
     }
   }

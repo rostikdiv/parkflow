@@ -2,10 +2,16 @@ import { Client, fetchExchange, subscriptionExchange } from 'urql';
 import { createClient as createWSClient } from 'graphql-ws';
 import { getStoredToken } from '../lib/auth';
 
+let wsUrl = import.meta.env.DEV
+  ? 'ws://localhost:8080/graphql-ws'
+  : import.meta.env.VITE_WS_URL || `wss://${window.location.host}/graphql-ws`;
+
+if (wsUrl && !wsUrl.endsWith('/graphql-ws')) {
+  wsUrl = wsUrl.replace(/\/$/, '') + '/graphql-ws';
+}
+
 const wsClient = createWSClient({
-  url: import.meta.env.DEV
-    ? 'ws://localhost:8080/graphql-ws'
-    : import.meta.env.VITE_WS_URL || `wss://${window.location.host}/graphql-ws`,
+  url: wsUrl,
   lazy: true,
   connectionParams: () => {
     const token = getStoredToken();
