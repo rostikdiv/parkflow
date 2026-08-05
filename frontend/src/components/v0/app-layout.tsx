@@ -1,4 +1,4 @@
-import { Navigation, Radio } from 'lucide-react'
+import { Navigation } from 'lucide-react'
 import { SearchBar } from './search-bar'
 import { ProfileAvatar } from './profile-avatar'
 
@@ -32,10 +32,6 @@ export function AppLayout({
               <Navigation size={14} aria-hidden="true" />
             </span>
             <span className="text-sm font-semibold tracking-tight text-white drop-shadow-md">ParkFlow</span>
-            <span className="ml-1 flex items-center gap-1 rounded-full bg-card/90 px-2 py-0.5 text-[10px] font-medium text-primary backdrop-blur-md shadow-sm">
-              <Radio size={11} className="animate-live-pulse" aria-hidden="true" />
-              Live
-            </span>
           </div>
           <SearchBar value={query} onChange={onQueryChange} />
         </div>

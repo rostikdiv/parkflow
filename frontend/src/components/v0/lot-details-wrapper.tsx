@@ -52,7 +52,7 @@ export function LotDetailsPanelWrapper({
 }) {
   const [{ fromIso, toIso }, setRange] = useState(makeDefaultRange);
 
-  const [{ data }, executeQuery] = useQuery({
+  const [{ data, fetching }, executeQuery] = useQuery({
     query: AVAILABILITY_QUERY,
     variables: { lotId: apiLot.id, from: fromIso, to: toIso },
   });
@@ -126,6 +126,8 @@ export function LotDetailsPanelWrapper({
       onToChange={(iso) => setRange(r => ({ ...r, toIso: iso }))}
       onClose={onClose}
       onSelectSpot={(spot) => onSelectSpot(spot, v0Lot)}
+      onRefresh={() => executeQuery({ requestPolicy: 'network-only' })}
+      isRefreshing={fetching}
     />
   );
 }

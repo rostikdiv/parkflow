@@ -1,6 +1,6 @@
 'use client'
 
-import { X, MapPin, CircleParking, AlertTriangle } from 'lucide-react'
+import { X, MapPin, CircleParking, AlertTriangle, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { lotStats, type ParkingLot, type Spot } from '@/lib/parking'
 import { TimeRangePicker } from './time-range-picker'
@@ -15,6 +15,8 @@ export function LotDetailsPanel({
   onToChange,
   onClose,
   onSelectSpot,
+  onRefresh,
+  isRefreshing,
 }: {
   lot: ParkingLot
   flashing: Set<string>
@@ -25,6 +27,8 @@ export function LotDetailsPanel({
   onToChange: (iso: string) => void
   onClose: () => void
   onSelectSpot: (spot: Spot) => void
+  onRefresh: () => void
+  isRefreshing?: boolean
 }) {
   const { total, free } = lotStats(lot)
   const isHistoryMode = new Date(fromIso).getTime() < Date.now() - 60000;
@@ -75,14 +79,26 @@ export function LotDetailsPanel({
               {lot.address}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close details"
-            className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
+          <div className="flex items-center">
+            <button
+              type="button"
+              onClick={onRefresh}
+              aria-label="Refresh details"
+              title="Refresh"
+              className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+            >
+              <RefreshCw size={18} className={cn(isRefreshing && "animate-spin")} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close details"
+              title="Close"
+              className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          </div>
         </header>
 
         {/* Stat strip */}

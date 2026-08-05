@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function SearchBar({
@@ -38,10 +38,10 @@ export function SearchBar({
       ) : (
         <button
           type="button"
-          aria-label="Filter results"
+          aria-label="Search"
           className="grid size-8 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
         >
-          <SlidersHorizontal size={18} aria-hidden="true" />
+          <Search size={18} aria-hidden="true" />
         </button>
       )}
     </div>
