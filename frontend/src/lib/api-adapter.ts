@@ -5,37 +5,55 @@ export function adaptLot(apiLot: ApiParkingLot, apiSpots?: SpotAvailability[]): 
   let rows: SpotRow[] = [];
 
   if (apiSpots && apiSpots.length > 0) {
-    // For v0 SpotGrid, we just chunk the spots into logical rows of 12.
-    // The physical layoutX/Y from the backend doesn't fit the flex-based UI well for large lots.
-    const ROW_SIZE = 12;
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    // Group spots by their zone letter (the part before the dash, e.g., 'A' from 'A-1')
+    const groupedByZone: Record<string, SpotAvailability[]> = {};
 
-    // Sort spots by code so they appear sequentially
-    const sortedSpots = [...apiSpots].sort((a, b) => {
-      // Try to parse numbers from code (e.g. "M-1" vs "M-10")
-      const numA = parseInt(a.code.replace(/[^0-9]/g, ''), 10) || 0;
-      const numB = parseInt(b.code.replace(/[^0-9]/g, ''), 10) || 0;
-      if (numA !== numB) return numA - numB;
-      return a.code.localeCompare(b.code);
+    apiSpots.forEach(s => {
+      const parts = s.code.split('-');
+      const zone = parts.length > 1 ? parts[0] : s.code.charAt(0) || 'A';
+      if (!groupedByZone[zone]) {
+        groupedByZone[zone] = [];
+      }
+      groupedByZone[zone].push(s);
     });
 
-    for (let i = 0; i < sortedSpots.length; i += ROW_SIZE) {
-      const slice = sortedSpots.slice(i, i + ROW_SIZE);
-      const letter = letters[Math.floor(i / ROW_SIZE)] || `R${Math.floor(i / ROW_SIZE)}`;
-
-      rows.push({
-        id: letter,
-        letter: letter,
-        spots: slice.map((s, col) => ({
-          id: s.spotId,
-          label: s.code,
-          status: s.isAnomaly ? 'anomaly' : ((s.isAvailable === true || (s as any).available === true) ? 'available' : 'occupied'),
-          kind: (s.type === 'DISABLED' || s.type.toLowerCase() === 'accessible') ? 'accessible' : (s.type === 'EV_CHARGER' || s.type.toLowerCase() === 'ev') ? 'ev' : 'standard',
-          col: col,
-          bookedUntil: s.bookedUntil,
-        })),
+    const ROW_SIZE = 25; // Render up to 25 spots per visual row to avoid infinite scrolling
+    
+    // Sort zones alphabetically
+    const zones = Object.keys(groupedByZone).sort();
+    
+    zones.forEach(zone => {
+      const zoneSpots = groupedByZone[zone];
+      
+      // Sort spots sequentially within the zone
+      zoneSpots.sort((a, b) => {
+        const numA = parseInt(a.code.replace(/[^0-9]/g, ''), 10) || 0;
+        const numB = parseInt(b.code.replace(/[^0-9]/g, ''), 10) || 0;
+        if (numA !== numB) return numA - numB;
+        return a.code.localeCompare(b.code);
       });
-    }
+
+      // Chunk long zones into multiple visual rows
+      for (let i = 0; i < zoneSpots.length; i += ROW_SIZE) {
+        const slice = zoneSpots.slice(i, i + ROW_SIZE);
+        
+        rows.push({
+          id: `${zone}-${i}`,
+          letter: zone,
+          spots: slice.map((s, col) => ({
+            id: s.spotId,
+            label: s.code,
+            status: s.isAnomaly ? 'anomaly' : ((s.isAvailable === true || (s as any).available === true) ? 'available' : 'occupied'),
+            // Fixed mapping: V3 schema uses 'EV_CHARGING' and 'DISABLED'
+            kind: (s.type === 'DISABLED' || s.type.toLowerCase() === 'accessible') ? 'accessible' 
+                : (s.type === 'EV_CHARGING' || s.type.toLowerCase() === 'ev') ? 'ev' 
+                : 'standard',
+            col: col,
+            bookedUntil: s.bookedUntil,
+          })),
+        });
+      }
+    });
   }
 
   return {

@@ -52,9 +52,7 @@ export function LotDetailsPanelWrapper({
 }) {
   const [{ fromIso, toIso }, setRange] = useState(makeDefaultRange);
 
-  // Re-fetch availability whenever time range changes.
-  // requestPolicy is 'network-only' (set at client level, no cacheExchange).
-  const [{ data }] = useQuery({
+  const [{ data }, executeQuery] = useQuery({
     query: AVAILABILITY_QUERY,
     variables: { lotId: apiLot.id, from: fromIso, to: toIso },
   });
@@ -74,9 +72,16 @@ export function LotDetailsPanelWrapper({
   useEffect(() => {
     if (!bookedSpotId) return;
     setLiveSpots(prev =>
-      prev.map(s => (s.spotId === bookedSpotId ? { ...s, isAvailable: false } : s))
+      prev.map(s => (s.spotId === bookedSpotId ? { 
+        ...s, 
+        isAvailable: false,
+        // Set a fake bookedUntil so the WebSocket doesn't overwrite it as FREE
+        bookedUntil: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+      } : s))
     );
-  }, [bookedSpotId]);
+    // Refetch the real availability data from the backend to get the actual bookedUntil
+    executeQuery({ requestPolicy: 'network-only' });
+  }, [bookedSpotId, executeQuery]);
 
   // Real-time subscription: update individual spot availability on sensor events
   useSubscription(

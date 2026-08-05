@@ -412,7 +412,10 @@ function ReservationCard({ reservation }: { reservation: AdminReservationRespons
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-border bg-secondary/30 p-4 text-sm">
       <div className="flex items-center justify-between">
-        <span className="font-semibold text-primary">{reservation.spotCode}</span>
+        <div>
+          <span className="font-semibold text-primary">Spot {reservation.spotCode}</span>
+          <p className="text-xs text-muted-foreground truncate max-w-[200px]">{reservation.lotName}</p>
+        </div>
         <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide', 
           reservation.status === 'CONFIRMED' || reservation.status === 'ACTIVE' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
         )}>
