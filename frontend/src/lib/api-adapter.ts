@@ -3,13 +3,13 @@ import type { ParkingLot, SpotRow } from './parking';
 
 export function adaptLot(apiLot: ApiParkingLot, apiSpots?: SpotAvailability[]): ParkingLot {
   let rows: SpotRow[] = [];
-  
+
   if (apiSpots && apiSpots.length > 0) {
     // For v0 SpotGrid, we just chunk the spots into logical rows of 12.
     // The physical layoutX/Y from the backend doesn't fit the flex-based UI well for large lots.
     const ROW_SIZE = 12;
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    
+
     // Sort spots by code so they appear sequentially
     const sortedSpots = [...apiSpots].sort((a, b) => {
       // Try to parse numbers from code (e.g. "M-1" vs "M-10")
@@ -22,7 +22,7 @@ export function adaptLot(apiLot: ApiParkingLot, apiSpots?: SpotAvailability[]): 
     for (let i = 0; i < sortedSpots.length; i += ROW_SIZE) {
       const slice = sortedSpots.slice(i, i + ROW_SIZE);
       const letter = letters[Math.floor(i / ROW_SIZE)] || `R${Math.floor(i / ROW_SIZE)}`;
-      
+
       rows.push({
         id: letter,
         letter: letter,
@@ -30,7 +30,7 @@ export function adaptLot(apiLot: ApiParkingLot, apiSpots?: SpotAvailability[]): 
           id: s.spotId,
           label: s.code,
           status: s.isAnomaly ? 'anomaly' : ((s.isAvailable === true || (s as any).available === true) ? 'available' : 'occupied'),
-          kind: (s.type.toLowerCase() === 'accessible' || s.type.toLowerCase() === 'ev') ? (s.type.toLowerCase() as any) : 'standard',
+          kind: (s.type === 'DISABLED' || s.type.toLowerCase() === 'accessible') ? 'accessible' : (s.type === 'EV_CHARGER' || s.type.toLowerCase() === 'ev') ? 'ev' : 'standard',
           col: col,
           bookedUntil: s.bookedUntil,
         })),

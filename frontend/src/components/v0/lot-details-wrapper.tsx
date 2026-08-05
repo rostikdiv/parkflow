@@ -84,13 +84,21 @@ export function LotDetailsPanelWrapper({
     (_, response) => {
       if (response.spotStatusChanged) {
         const event = response.spotStatusChanged as SpotStatusEvent;
-        // Sensor status 'FREE' means the spot is physically unoccupied and bookable
-        const isAvail = event.status === 'FREE';
 
         setLiveSpots(prev =>
-          prev.map(spot =>
-            spot.spotId === event.spotId ? { ...spot, isAvailable: isAvail } : spot
-          )
+          prev.map(spot => {
+            if (spot.spotId === event.spotId) {
+              const isBooked = spot.bookedUntil && new Date(spot.bookedUntil) > new Date();
+              // If it's booked, it is NEVER available for someone else. 
+              // If it's not booked, availability depends on the physical sensor.
+              const isAvail = !isBooked && event.status === 'FREE';
+              // Anomaly: physically occupied but no active booking
+              const isAnomaly = !isBooked && event.status === 'OCCUPIED';
+              
+              return { ...spot, isAvailable: isAvail, isAnomaly };
+            }
+            return spot;
+          })
         );
 
         // Trigger the flash ring animation on the changed spot
