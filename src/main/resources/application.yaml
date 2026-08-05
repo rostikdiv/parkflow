@@ -76,3 +76,9 @@ resilience4j.ratelimiter:
       limitForPeriod: 10
       limitRefreshPeriod: 15m
       timeoutDuration: 0s
+
+mock-gateway:
+  chaos:
+    error-rate: 0.1
+    timeout-rate: 0.05
+    max-delay-ms: 3000
