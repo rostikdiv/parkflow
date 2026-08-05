@@ -1,62 +1,62 @@
 # AGENTS.md — ParkFlow
 
-## Роль
-Ти — агент, що реалізує бекенд-проєкт ParkFlow (Java 21, Spring Boot 3) за наперед затвердженим технічним планом. Ти НЕ проектуєш архітектуру заново — вона вже прийнята в `docs/parkflow_final_plan.md`. Твоя задача — реалізувати конкретний мілстоун з плану, суворо дотримуючись описаних там рішень.
+## Role
+You are an agent implementing the ParkFlow backend project (Java 21, Spring Boot 3) according to a pre-approved technical plan. You are NOT designing the architecture anew — it is already adopted in `docs/parkflow_final_plan.md`. Your task is to implement a specific milestone from the plan, strictly adhering to the solutions described there.
 
-## Джерело істини
-- `docs/parkflow_final_plan.md` — єдине джерело архітектурних рішень (доменна модель, API, мілстоуни, тестова стратегія). Якщо запит суперечить цьому файлу — зупинись і запитай, а не імпровізуй нову архітектуру.
-- Ніколи не міняй уже прийняті рішення (наприклад, exclusion constraint замість `@Version` як продакшн-рівень, CQRS-lite розподіл REST/GraphQL) без явного дозволу в самому запиті.
+## Source of truth
+- `docs/parkflow_final_plan.md` is the single source of architectural solutions (domain model, API, milestones, test strategy). If a request contradicts this file — stop and ask, rather than improvising a new architecture.
+- Never change already adopted solutions (e.g. exclusion constraint instead of `@Version` as production-level, CQRS-lite distribution of REST/GraphQL) without explicit permission in the request itself.
 
-## Технологічний стек (незмінний)
-- Java 21, Spring Boot 3.x, PostgreSQL + Flyway, RabbitMQ, Redis, Resilience4j, вбудований `java.net.http.HttpClient`, Testcontainers.
-- Хмара: **GCP**, не AWS. Якщо десь у коментарях/прикладах трапляється AWS-специфіка (ARN, boto3 і т.д.) — це помилка, виправ на GCP-еквівалент.
-- Не додавай нових залежностей/бібліотек, які не згадані в `parkflow_final_plan.md`, без явного запиту.
+## Technology stack (unchanged)
+- Java 21, Spring Boot 3.x, PostgreSQL + Flyway, RabbitMQ, Redis, Resilience4j, built-in `java.net.http.HttpClient`, Testcontainers.
+- Cloud: **GCP**, not AWS. If there is AWS-specificity (ARN, boto3, etc.) somewhere in the comments/examples, it is a mistake, fix it to the GCP equivalent.
+- Do not add new dependencies/libraries that are not mentioned in `parkflow_final_plan.md`, without an explicit request.
 
-## Обов'язкові конвенції коду
-1. **Усі коментарі в коді — англійською**, незалежно від мови спілкування в чаті. Javadoc теж англійською.
-2. Коментарі пояснюють **чому**, а не **що** (код сам показує "що"). Приклад:
-   - ❌ `// increment counter`
-   - ✅ `// Optimistic locking is too coarse for time-range bookings; exclusion constraint handles this at DB level instead`
-3. Кожен клас/метод, що реалізує рішення з "драбини рішень" (race condition, retry, circuit breaker) — обов'язково коментар з посиланням на відповідний розділ плану (`// See plan §4.3, level 3`).
-4. Sealed-типи та exhaustive switch — без `default` гілки, компілятор має перевіряти повноту.
+## Required code conventions
+1. **All comments in the code are in English**, regardless of the language of the chat. Javadoc is also in English.
+2. Comments explain **why**, not **what** (the code itself shows "what"). Example:
+- ❌ `// increment counter`
+- ✅ `// Optimistic locking is too coarse for time-range bookings; exclusion constraint handles this at DB level instead`
+3. Each class/method that implements a solution from the "decision ladder" (race condition, retry, circuit breaker) — must be a comment with a link to the corresponding section of the plan (`// See plan §4.3, level 3`).
+4. Sealed types and exhaustive switch — without a `default` branch, the compiler must check for completeness.
 
-## Обов'язковий формат відповіді (технічні блоки)
-Після кожної реалізованої зміни агент додає в чат (не в код) короткий структурований блок:
+## Required response format (technical blocks)
+After each implemented change, the agent adds a short structured block to the chat (not to the code):
 
 ```
-### Що зроблено
-[1-2 речення]
+### What was done
+[1-2 sentences]
 
-### Технічне пояснення
-[Чому саме так, які альтернативи розглядались і чому відхилені — 3-5 речень]
+### Technical explanation
+[Why exactly, what alternatives were considered and why rejected — 3-5 sentences]
 
-### Тести
-[Які тести додано/оновлено, Фаза A чи B за планом]
+### Tests
+[What tests were added/updated, Phase A or B according to plan]
 
-### Що перевірити вручну
-[Якщо є]
+### What to check manually
+[If any]
 ```
-Не пропускай цей блок навіть для дрібних змін — він потрібен для контролю якості перед комітом.
+Do not skip this block even for minor changes — it is needed for quality control before the commit.
 
-## Тестова стратегія (обов'язково)
-- Фаза A (інфраструктурні тести) реалізується РАЗОМ зі скелетом, не після.
-- Фаза B (бізнес-логіка) — одразу після реалізації відповідної функції, в тому самому PR, не окремим "додати тести пізніше" кроком.
-- Ніколи не позначай задачу виконаною без тестів, якщо план вимагає тести для цього мілстоуна (див. `parkflow_final_plan.md §14`).
+## Test strategy (required)
+- Phase A (infrastructure tests) is implemented TOGETHER with the skeleton, not after.
+- Phase B (business logic) — immediately after the implementation of the corresponding function, in the same PR, not as a separate "add tests later" step.
+- Never mark a task as done without tests if the plan requires tests for this milestone (see `parkflow_final_plan.md §14`).
 
 ## Safety / Guardrails
-- НІКОЛИ не видаляй і не переписуй Flyway-міграції, які вже застосовані (створюй нову міграцію для змін).
-- НІКОЛИ не комітиш секрети (паролі, ключі) — тільки через `.env`/`application-local.yml`, що в `.gitignore`.
-- Перед будь-якою деструктивною командою (`git reset --hard`, видалення файлів, `docker volume rm`) — питай підтвердження, навіть якщо термінал у Auto-режимі.
-- Якщо задача виглядає так, ніби вимагає зміни архітектурного рішення з плану — зупинись і запитай, не вирішуй сам.
+- NEVER delete or overwrite Flyway migrations that have already been applied (create a new migration for changes).
+- NEVER commit secrets (passwords, keys) — only through `.env`/`application-local.yml`, which is in `.gitignore`.
+- Before any destructive command (`git reset --hard`, deleting files, `docker volume rm`) — ask for confirmation, even if the terminal is in Auto mode.
+- If the task looks like it requires changing the architectural solution from the plan — stop and ask, don't solve it yourself.
 
-## Мова спілкування
-Відповідай у чаті українською. Код, коментарі в коді, назви змінних/класів/методів — англійською.
+## Communication language
+Answer in the chat in Ukrainian. Code, code comments, variable/class/method names — in English.
 
-## Робота з PROGRESS.md та планування
-1. **PROGRESS.md** — живе джерело істини про стан проєкту. Агент зобов'язаний:
-   - Читати PROGRESS.md на початку виконання кожної задачі (до створення Plan Artifact).
-   - Оновлювати PROGRESS.md в кінці кожної задачі (після структурного блоку звіту). Без оновлення PROGRESS.md задача не вважається завершеною.
-2. **Планувальник**: Ти виконуєш роль 'технічного перекладача' для запитів користувача, заповнюючи технічні прогалини з плану.
-   - Звіряй з планом: якщо запит суперечить parkflow_final_plan.md (наприклад, інший архітектурний підхід) — зупинись і перепитай, чи це свідоме відхилення.
-   - Один мілстоун за раз: не починай наступний, доки поточний не відмічений як завершений у PROGRESS.md.
-   - Стекуйся суворо до parkflow_final_plan.md (Java 21, GCP, і т.д.). Не вигадуй нові технології чи AWS без дозволу.
+## Working with PROGRESS.md and planning
+1. **PROGRESS.md** is a living source of truth about the project status. The agent is required to:
+- Read PROGRESS.md at the beginning of each task (before creating the Plan Artifact).
+- Update PROGRESS.md at the end of each task (after the report structure block). Without updating PROGRESS.md, the task is not considered completed.
+2. **Planner**: You act as a 'technical translator' for user requests, filling in technical gaps from the plan.
+- Check with the plan: if a request contradicts parkflow_final_plan.md (for example, a different architectural approach) — stop and ask if this is a deliberate deviation.
+- One milestone at a time: do not start the next one until the current one is marked as completed in PROGRESS.md.
+- Stick strictly to parkflow_final_plan.md (Java 21, GCP, etc.). Don't invent new technologies or AWS without permission.

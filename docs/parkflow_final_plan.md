@@ -1,186 +1,186 @@
-# ParkFlow — технічний план реалізації
+# ParkFlow — technical implementation plan
 
-Система бронювання паркомісць з live-мапою: клієнт бачить паркінги на карті, вільні місця в реальному часі (дані від симульованих фізичних сенсорів), і може забронювати конкретне місце на часовий діапазон.
-
----
-
-## 1. Опис системи
-
-Три незалежні джерела вхідних даних формують архітектуру:
-
-1. **Клієнтський REST/GraphQL API** (синхронний) — пошук вільних місць, створення/скасування бронювання, перегляд статусу.
-2. **Потік подій від сенсорів** (асинхронний, високочастотний, симульований окремим контейнером `sensor-emulator`) — кожні кілька секунд шле `{spotId, status: OCCUPIED|FREE, timestamp}` batch-ами на internal ingestion-ендпоінт.
-3. **Виклики системи назовні** (платіжний шлюз, сповіщення) — симульовані окремим mock-сервісом з "chaos"-режимом (керований % відмов/timeout-ів для чесної демонстрації Retry).
-
-Потік бронювання: клієнт бронює місце (REST) → задача підтвердження оплати в чергу → воркер викликає платіжний шлюз (з Retry) → статус бронювання оновлюється → подія "підтверджено" в чергу сповіщень → окремий воркер шле нотифікацію. Паралельно потік подій від сенсорів безперервно оновлює фізичний стан місць і звіряється з бронюваннями (reconciliation), виявляючи розбіжності без жодного ML — чисті детерміновані бізнес-правила на часових вікнах.
+Parking space reservation system with live map: the client sees parking lots on the map, free spaces in real time (data from simulated physical sensors), and can book a specific space for a time range.
 
 ---
 
-## 2. Технологічний стек
+## 1. System description
 
-| Шар | Технологія |
+Three independent sources of input data form the architecture:
+
+1. **Client REST/GraphQL API** (synchronous) — search for free spaces, create/cancel reservation, view status.
+2. **Sensor event stream** (asynchronous, high-frequency, simulated by a separate `sensor-emulator` container) — sends `{spotId, status: OCCUPIED|FREE, timestamp}` batches to the internal ingestion endpoint every few seconds.
+3. **Outside system calls** (payment gateway, notifications) — simulated by a separate mock service with "chaos" mode (controlled % of failures/timeouts for fair demonstration of Retry).
+
+Booking flow: client books a place (REST) ​​→ payment confirmation task in queue → worker calls payment gateway (with Retry) → booking status is updated → "confirmed" event in notification queue → separate worker sends notification. In parallel, the event stream from sensors continuously updates the physical state of places and checks with reservations (reconciliation), detecting discrepancies without any ML — pure deterministic business rules on time windows.
+
+---
+
+## 2. Technology stack
+
+| Layer | Technology |
 |---|---|
-| Мова/платформа | Java 21 (Virtual Threads, Sealed Classes, Sequenced Collections) |
+| Language/platform | Java 21 (Virtual Threads, Sealed Classes, Sequenced Collections) |
 | Framework | Spring Boot 3.x |
-| API | Spring MVC (REST) + Spring GraphQL |
-| Персистентність | PostgreSQL + Spring Data JPA/Hibernate + Flyway (міграції) |
-| Concurrency-контроль | PostgreSQL exclusion constraint (продакшн-рівень), `@Version`/`ReentrantLock` (навчальні приклади, показані в README як драбина рішень) |
-| Черга/події | RabbitMQ |
-| Кеш | Redis |
-| Resilience | Resilience4j — Retry, Circuit Breaker, RateLimiter (один інструмент, три патерни) |
-| HTTP-клієнт | `java.net.http.HttpClient` (вбудований) |
-| Валідація/парсинг | `Pattern`/`Matcher` (номерні знаки, sensor payload) |
-| Моделювання станів | `sealed interface ReservationStatus` + exhaustive `switch` (record patterns) |
-| Спостережуваність | Spring Boot Actuator, Prometheus/Grafana, Micrometer Tracing + Zipkin |
-| Тестування | JUnit 5, Mockito, `@WebMvcTest`/`@DataJpaTest`, Testcontainers (Postgres + RabbitMQ) |
-| Фронтенд (MVP) | Vanilla JS + Leaflet + OpenStreetMap тайли |
-| Фронтенд (опційний апгрейд) | React (Vite) + react-leaflet + GraphQL Subscription |
-| DevOps | Docker + Docker Compose, GitHub Actions CI, Terraform (GCP: Cloud Run/GKE, Cloud SQL, Memorystore, RabbitMQ — self-hosted на Compute Engine або CloudAMQP marketplace) |
+| API | Spring MVC (REST) ​​+ Spring GraphQL |
+| Persistence | PostgreSQL + Spring Data JPA/Hibernate + Flyway (migrations) |
+| Concurrency control | PostgreSQL exclusion constraint (production level), `@Version`/`ReentrantLock` (learning examples shown in README as a solution ladder) |
+| Queue/Events | RabbitMQ |
+| Cache | Redis |
+| Resilience | Resilience4j — Retry, Circuit Breaker, RateLimiter (one tool, three patterns) |
+| HTTP client | `java.net.http.HttpClient` (built-in) |
+| Validation/Parsing | `Pattern`/`Matcher` (license plates, sensor payload) |
+| State modeling | `sealed interface ReservationStatus` + exhaustive `switch` (record patterns) |
+| Observability | Spring Boot Actuator, Prometheus/Grafana, Micrometer Tracing + Zipkin |
+| Testing | JUnit 5, Mockito, `@WebMvcTest`/`@DataJpaTest`, Testcontainers (Postgres + RabbitMQ) |
+| Frontend (MVP) | Vanilla JS + Leaflet + OpenStreetMap tiles |
+| Frontend (optional upgrade) | React (Vite) + react-leaflet + GraphQL Subscription |
+| DevOps | Docker + Docker Compose, GitHub Actions CI, Terraform (GCP: Cloud Run/GKE, Cloud SQL, Memorystore, RabbitMQ — self-hosted on Compute Engine or CloudAMQP marketplace) |
 
-**Примітка щодо хмари:** orthoeye.digital і TJHelpers у вакансіях згадують саме AWS. Свідомий вибір GCP замість AWS — чесно позначений компроміс: Terraform, VPC, managed Postgres/Redis, CI/CD і сам підхід до IaC переносяться між хмарами майже 1-в-1 (та сама модель мислення, інші назви сервісів), тому на співбесіді це governance-питання "чи вмієш ти взагалі в IaC/cloud", а не "чи знаєш ти конкретно AWS-консоль". Вартий один рядок в README: "Built on GCP; concepts transfer directly to AWS/Azure — Terraform, IAM, managed services."
+**Cloud note:** orthoeye.digital and TJHelpers mention AWS in their job postings. Conscious choice of GCP instead of AWS is an honest compromise: Terraform, VPC, managed Postgres/Redis, CI/CD and the IaC approach itself are transferred between clouds almost 1-in-1 (same thinking model, different service names), so in the interview this is a governance question "do you know IaC/cloud at all", not "do you know the AWS console specifically". One line in the README is worth it: "Built on GCP; concepts transfer directly to AWS/Azure — Terraform, IAM, managed services."
 
 ---
 
-## 3. Архітектура: модульний моноліт
+## 3. Architecture: modular monolith
 
-Один деплойований Spring Boot застосунок, розділений на доменні модулі (`reservation`, `inventory`, `payment`, `notification`, `sensor-ingestion`), кожен з чіткими межами: спілкування між модулями — тільки через явні інтерфейси або події в RabbitMQ, ніколи напряму через чужі репозиторії. RabbitMQ виступає внутрішнім event bus — та сама асинхронна розв'язка (loose coupling), що й у мікросервісній архітектурі, без операційної складності окремих деплойментів.
+One deployed Spring Boot application, divided into domain modules (`reservation`, `inventory`, `payment`, `notification`, `sensor-ingestion`), each with clear boundaries: communication between modules — only through explicit interfaces or events in RabbitMQ, never directly through other people's repositories. RabbitMQ acts as an internal event bus — the same loose coupling as in a microservice architecture, without the operational complexity of separate deployments.
 
-Кожен модуль всередині має однакову шарувату структуру: **API-шар** (контролери/GraphQL-резолвери, DTO) → **Application-шар** (use-case сервіси, оркестрація) → **Domain-шар** (сутності, доменні події, бізнес-правила) → **Infrastructure-шар** (JPA-репозиторії, RabbitMQ-паблішери, HTTP-клієнти), з інверсією залежностей: Infrastructure реалізує інтерфейси, оголошені в Domain, а не навпаки.
+Each module internally has the same layered structure: **API layer** (controllers/GraphQL resolvers, DTOs) → **Application layer** (use-case services, orchestration) → **Domain layer** (entities, domain events, business rules) → **Infrastructure layer** (JPA repositories, RabbitMQ publishers, HTTP clients), with dependency inversion: Infrastructure implements interfaces declared in Domain, not vice versa.
 
-### Компоненти і технології
+### Components and technologies
 
 ```mermaid
-graph TD
-    Client["Browser / Map UI"]
+graph TD 
+Client["Browser / Map UI"] 
 
-    API["REST API<br>Auth, Reservations, Admin"]
-    GQL["GraphQL<br>Query + Subscription"]
+API["REST API<br>Auth, Reservations, Admin"] 
+GQL["GraphQL<br>Query + Subscription"] 
 
-    Res["Reservation module"]
-    Inv["Inventory module<br>Lots / Spots"]
-    Pay["Payment module"]
-    Notif["Notification module"]
-    Sensor["Sensor-ingestion module"]
+Res["Reservation module"] 
+Inv["Inventory module<br>Lots / Spots"] 
+Pay["Payment module"] 
+Notif["Notification module"] 
+Sensor["Sensor-ingestion module"] 
 
-    MQ[("RabbitMQ")]
-    PG[("PostgreSQL")]
-    Redis[("Redis")]
+MQ[("RabbitMQ")] 
+PG[("PostgreSQL")] 
+Redis[("Redis")] 
 
-    Emu["Sensor emulator<br>(окремий контейнер)"]
-    GW["Mock payment gateway<br>(окремий контейнер)"]
+Emu["Sensor emulator<br>(separate container)"] 
+GW["Mock payment gateway<br>(separate container)"] 
 
-    Client -->|REST| API
-    Client -->|Query / Subscription| GQL
+Client -->|REST| API 
+Client -->|Query / Subscription| GQL 
 
-    API --> Res
-    API --> Inv
-    API --> Pay
-    GQL --> Inv
-    GQL --> Res
+API --> Res 
+API --> Inv 
+API --> Pay 
+GQL --> Inv 
+GQL --> Res 
 
-    Res --> PG
-    Inv --> PG
-    Inv --> Redis
-    Pay --> PG
+Res --> PG 
+Inv --> PG 
+Inv --> Redis 
+Pay --> PG 
 
-    Res -.->|events| MQ
-    Pay -.->|events| MQ
-    Sensor -.->|events| MQ
-    MQ -.-> Notif
-    MQ -.-> Pay
-    MQ -.-> Sensor
-    GQL -.->|subscribe| MQ
+Res -.->|events| MQ 
+Pay -.->|events| MQ 
+Sensor -.->|events| MQ 
+MQ -.-> Notif 
+MQ -.-> Pay 
+MQ -.-> Sensor 
+GQL -.->|subscribe| MQ 
 
-    Emu -->|HTTP batch| Sensor
-    Pay -->|HTTP + Retry| GW
+Emu -->|HTTP batch| Sensor 
+Pay -->|HTTP + Retry| GW
 ```
 
 ---
 
-## 4. Доменна модель
+## 4. Domain Model
 
-### 4.1 Сутності
+### 4.1 Entities
 
-**ParkingLot** — `id, name, address, latitude/longitude (bbox-пошук), type: OPEN_AIR|INDOOR|UNDERGROUND, hourlyRate, opensAt/closesAt, timeZone, status: ACTIVE|CLOSED` (soft delete — паркінг не видаляється, а закривається)
+**ParkingLot** — `id, name, address, latitude/longitude (bbox-search), type: OPEN_AIR|INDOOR|UNDERGROUND, hourlyRate, opensAt/closesAt, timeZone, status: ACTIVE|CLOSED` (soft delete — the parking lot is not deleted, but closed)
 
-**Spot** — `id, parkingLot, code ("A-12"), type: STANDARD|DISABLED|EV_CHARGING|COMPACT, physicalStatus: FREE|OCCUPIED|UNKNOWN (стан від сенсора), lastSensorUpdate, version (@Version), layoutX/layoutY (позиція на схемі для рендерингу)`
+**Spot** — `id, parkingLot, code ("A-12"), type: STANDARD|DISABLED|EV_CHARGING|COMPACT, physicalStatus: FREE|OCCUPIED|UNKNOWN (status from the sensor), lastSensorUpdate, version (@Version), layoutX/layoutY (position on the diagram for rendering)`
 
 **AppUser** — `id, email (unique), passwordHash, fullName, phone, role: USER|ADMIN, deletedAt` (soft delete)
 
-**Reservation** — `id, user, spot, licensePlate (regex-валідація), startTime/endTime (окремі колонки типу timestamptz — Hibernate не має вбудованого мапінгу на tstzrange, боротись із цим через додаткові типи на MVP не варто), status (enum у БД → sealed тип у домені), totalPrice, idempotencyKey (unique, required header, 400 якщо відсутній), createdAt/updatedAt`
+**Reservation** — `id, user, spot, licensePlate (regex-validation), startTime/endTime (separate columns of type timestamptz — Hibernate does not have a built-in mapping to tstzrange, it is not worth fighting with this through additional types on MVP), status (enum in the database → sealed type in the domain), totalPrice, idempotencyKey (unique, required header, 400 if missing), createdAt/updatedAt`
 
 **Payment** — `id, reservation (OneToOne), amount, status: INITIATED|SUCCEEDED|FAILED|REFUNDED, externalRef, attempts, lastError`
 
-**SensorEvent** (append-only) — `id, externalEventId (unique — ідемпотентність повторної доставки від емулятора), spotId, rawPayload, status, sensorTimestamp, receivedAt, processedAt`
+**SensorEvent** (append-only) — `id, externalEventId (unique — idempotency of repeated delivery from the emulator), spotId, rawPayload, status, sensorTimestamp, receivedAt, processedAt`
 
 **SpotAnomaly** — `id, spot, type: OCCUPIED_WITHOUT_RESERVATION|RESERVED_BUT_EMPTY_TOO_LONG|SENSOR_SILENT, details, detectedAt, resolvedAt`
 
-**ReservationAudit** (append-only лог кожного переходу статусу):
+**ReservationAudit** (append-only log of each status transition):
 ```sql
 CREATE TABLE reservation_audit (
-    id UUID PRIMARY KEY,
-    reservation_id UUID NOT NULL,
-    from_status VARCHAR,
-    to_status VARCHAR,
-    triggered_by VARCHAR, -- USER | SYSTEM | SENSOR | PAYMENT
-    metadata JSONB,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+id UUID PRIMARY KEY,
+reservation_id UUID NOT NULL,
+from_status VARCHAR,
+to_status VARCHAR,
+triggered_by VARCHAR, -- USER | SYSTEM | SENSOR | PAYMENT
+metadata JSONB,
+created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
-Пишеться прямо в use-case сервісі при кожному переході `ReservationStatus`. Ще одне легітимне використання `JSONB` (аргумент для Testcontainers — H2 не потягне).
+Written directly in the use-case service at each `ReservationStatus` transition. Another legitimate use of `JSONB` (argument for Testcontainers — H2 won't pull).
 
-### 4.2 Sealed-ієрархія статусів
+### 4.2 Sealed status hierarchy
 
 ```java
-public sealed interface ReservationStatus {
-    record Pending(Instant createdAt) implements ReservationStatus {}
-    record Confirmed(Instant confirmedAt, String paymentRef) implements ReservationStatus {}
-    record Active(Instant checkedInAt) implements ReservationStatus {}
-    record Completed(Instant completedAt) implements ReservationStatus {}
-    record Expired(String reason) implements ReservationStatus {}
-    record Cancelled(String cancelledBy, Instant at) implements ReservationStatus {}
+public sealed interface ReservationStatus { 
+record Pending(Instant createdAt) implements ReservationStatus {} 
+record Confirmed(Instant confirmedAt, String paymentRef) implements ReservationStatus {} 
+record Active(Instant checkedInAt) implements ReservationStatus {} 
+record Completed(Instant completedAt) implements ReservationStatus {} 
+record Expired(String reason) implements ReservationStatus {} 
+record Canceled(String canceledBy, Instant at) implements ReservationStatus {}
 }
 ```
 
-Переходи — виключно через exhaustive `switch` з record patterns:
+Transitions — exclusively through exhaustive `switch` with record patterns:
 ```java
-static ReservationStatus onPaymentSuccess(ReservationStatus s, String ref) {
-    return switch (s) {
-        case Pending p   -> new Confirmed(Instant.now(), ref);
-        case Confirmed c -> throw new IllegalStateException("already confirmed");
-        case Active a    -> throw new IllegalStateException("already active");
-        case Completed c -> throw new IllegalStateException("finished");
-        case Expired e   -> throw new IllegalStateException("expired");
-        case Cancelled c -> throw new IllegalStateException("cancelled");
-    };
+static ReservationStatus onPaymentSuccess(ReservationStatus s, String ref) { 
+return switch (s) { 
+case Pending p -> new Confirmed(Instant.now(), ref); 
+case Confirmed c -> throw new IllegalStateException("already confirmed"); 
+case Active a -> throw new IllegalStateException("already active"); 
+case Completed c -> throw new IllegalStateException("finished"); 
+case Expired e -> throw new IllegalStateException("expired"); 
+case Canceled c -> throw new IllegalStateException("cancelled"); 
+};
 }
 ```
 
-**Примітка щодо мапінгу:** JPA погано мапить sealed-ієрархії напряму. Рішення: в БД — звичайний enum-стовпець, sealed-типи реконструюються в доменному шарі мапером (той самий exhaustive switch). "БД зберігає факт, домен моделює поведінку" — свідоме архітектурне рішення, а не костиль.
+**Note on mapping:** JPA does not map sealed hierarchies directly. Solution: in the DB — a regular enum column, sealed types are reconstructed in the domain layer by the mapper (the same exhaustive switch). "DB stores the fact, the domain models the behavior" — a conscious architectural decision, not a crutch.
 
-### 4.3 Race condition на бронюванні — драбина рішень
+### 4.3 Race condition on reservations — a ladder of solutions
 
-`@Version` на Spot надто грубий — серіалізує всі бронювання місця, навіть неперетинні за часом. Тому три рівні, всі показані в коді як навчальна прогресія:
+`@Version` on Spot is too crude — serializes all seat reservations, even those that are not overlapping in time. Therefore, three levels, all shown in the code as a learning progression:
 
-| Рівень | Механізм | Статус |
+| Level | Mechanism | Status |
 |---|---|---|
-| 1. Навчальний | `ReentrantLock` per spotId (`ConcurrentHashMap<String, ReentrantLock>`) | показує low-level concurrency, не масштабується на >1 інстанс |
-| 2. Базовий | `@Version` optimistic locking | працює, але надто грубо для time-range |
-| 3. Продакшн | `EXCLUDE USING gist (spot_id WITH =, tstzrange(start_time, end_time) WITH &&)` | атомарне відхилення перетинних інтервалів на рівні БД, масштабується на будь-яку кількість інстансів |
+| 1. Learning | `ReentrantLock` per spotId (`ConcurrentHashMap<String, ReentrantLock>`) | shows low-level concurrency, does not scale to >1 instance |
+| 2. Basic | `@Version` optimistic locking | works, but too crude for time-range |
+| 3. Production | `EXCLUDE USING gist (spot_id WITH =, tstzrange(start_time, end_time) WITH &&)` | atomic rejection of intersection intervals at the DB level, scales to any number of instances |
 
-Тест, що це доводить: 50 потоків через `ExecutorService` одночасно бронюють одне місце на один час → рівно один успіх, 49 → `ConflictException`.
+Test that proves this: 50 threads via `ExecutorService` simultaneously booking one spot at the same time → exactly one success, 49 → `ConflictException`.
 
-**Застереження щодо Virtual Threads:** саме тому рівень 1 навчальної драбини використовує `ReentrantLock`, а не `synchronized` — `synchronized`-блоки можуть "пінити" (pin) віртуальний потік до платформного carrier-потоку в Java 21, що нівелює вигоду від Virtual Threads. `ReentrantLock` пінінгу не спричиняє.
+**Caution on Virtual Threads:** this is why level 1 of the training ladder uses `ReentrantLock`, not `synchronized` — `synchronized` blocks can pin a virtual thread to a platform carrier thread in Java 21, which negates the benefit of Virtual Threads. `ReentrantLock` does not cause pinning.
 
-### 4.4 Порядок Flyway-міграцій — `btree_gist` перед exclusion constraint
+### 4.4 Flyway migration order — `btree_gist` before exclusion constraint
 
-`EXCLUDE USING gist` на `spot_id` (тип `uuid`) вимагає розширення `btree_gist` — "чистий" GiST у PostgreSQL не підтримує оператор рівності для `uuid`/`int` без нього. Розширення має піднятись **до** таблиці з exclusion constraint, інакше міграція впаде:
+`EXCLUDE USING gist` on `spot_id` (type `uuid`) requires `btree_gist` extension — "pure" GiST in PostgreSQL does not support equality operator for `uuid`/`int` without it. The extension must be promoted **to** the table with exclusion constraint, otherwise migration will fail:
 
 ```sql
 -- V1__extensions.sql
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
--- пізніша міграція (M2) вже може оголошувати EXCLUDE USING gist
+-- later migration (M2) can already declare EXCLUDE USING gist
 ```
 
 ---
@@ -188,15 +188,14 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 ## 5. Idempotency-Key
 
 ```
-Клієнт генерує Idempotency-Key (UUIDv4) →
-  Redis: SET idempotency:{key} "processing" EX 300 NX
-    → SET успішний → продовжуємо створення броні
-    → ключ вже існує → 409 Conflict з посиланням на існуюче бронювання
-  Після завершення транзакції → SET idempotency:{key} {reservationId} EX 86400
+Client generates Idempotency-Key (UUIDv4) →
+Redis: SET idempotency:{key} "processing" EX 300 NX
+→ SET successful → continue creating reservation
+→ key already exists → 409 Conflict with reference to existing reservation
+After transaction completion → SET idempotency:{key} {reservationId} EX 86400
 ```
 
-**Навіщо і Redis, і унікальний `idempotencyKey` у БД:** Redis `SETNX` — швидкий fail-fast для запитів, що прийшли майже одночасно (races до того, як транзакція БД взагалі почалась). Унікальний constraint у Postgres — durable запасний рівень: якщо Redis впаде або TTL некоректно спрацює, БД все одно не пропустить дублікат. Два шари навмисні, не надлишкові.
-
+**Why Redis and unique `idempotencyKey` in the DB:** Redis `SETNX` — fast fail-fast for requests that came almost simultaneously (races before the DB transaction even started). Unique constraint in Postgres — durable fallback level: if Redis crashes or TTL works incorrectly, the DB still will not miss the duplicate. The two layers are intentional, not excessive.
 ---
 
 ## 6. Graceful Degradation
@@ -252,147 +251,147 @@ type Query {
 }
 
 type Subscription {
-  spotStatusChanged(lotId: ID!): SpotStatusEvent!
+spotStatusChanged(lotId: ID!): SpotStatusEvent!
 }
 
 type SpotStatusEvent { spotId: ID!, status: PhysicalStatus!, at: Instant! }
 ```
 
-`Subscription` підписується на ту саму подію `spot.status.changed`, яку публікує `sensor-ingestion` у RabbitMQ — внутрішня подія стає публічним стрімом через один listener.
+`Subscription` subscribes to the same `spot.status.changed` event that `sensor-ingestion` publishes to RabbitMQ — the internal event becomes a public stream through a single listener.
 
-**Транспорт:** Subscription працює через WebSocket (`spring.graphql.websocket.path=/graphql-ws`), окремий канал від звичайного HTTP GraphQL-ендпоінта для Query — фронтенд (M7) підключається до нього окремим WS-клієнтом.
+**Transport:** Subscription works over WebSocket (`spring.graphql.websocket.path=/graphql-ws`), a separate channel from the regular HTTP GraphQL endpoint for Query — the frontend (M7) connects to it with a separate WS-client.
 
 ---
 
-## 9. Топологія RabbitMQ
+## 9. RabbitMQ topology
 
-| Exchange | Тип | Routing key | Черга → Consumer |
+| Exchange | Type | Routing key | Queue → Consumer |
 |---|---|---|---|
-| `parkflow.sensor` | topic | `sensor.{lotId}` | `q.sensor.events` → ingestion consumer (batch ack, ідемпотентність за sensor event id) |
-| `parkflow.payment` | direct | `payment.command` / `payment.result` | `q.payment.commands` → payment-worker · `q.payment.results` → reservation модуль |
+| `parkflow.sensor` | topic | `sensor.{lotId}` | `q.sensor.events` → ingestion consumer (batch ack, idempotence by sensor event id) |
+| `parkflow.payment` | direct | `payment.command` / `payment.result` | `q.payment.commands` → payment-worker · `q.payment.results` → reservation module |
 | `parkflow.notification` | direct | `notify.{email,push}` | `q.notification.commands` → notification-worker |
-| `parkflow.dlx` | direct | — | `*.dlq` — dead-letter для всіх черг + алерт |
+| `parkflow.dlx` | direct | — | `*.dlq` — dead-letter for all queues + alert |
 
-**Virtual Threads для консюмерів потребують явної конфігурації.** `spring.threads.virtual.enabled=true` вмикає Virtual Threads для web-контейнера (Tomcat), але **не** для RabbitMQ listener — той має власний пул потоків. Явно підключаємо `Executors.newVirtualThreadPerTaskExecutor()` як `taskExecutor` у `SimpleRabbitListenerContainerFactory`. Ідемпотентність консюмерів: `processed_events` (Postgres unique) або Redis `SETNX`.
+**Virtual Threads for consumers require explicit configuration.** `spring.threads.virtual.enabled=true` enables Virtual Threads for the web container (Tomcat), but **not** for the RabbitMQ listener — it has its own thread pool. Explicitly connect `Executors.newVirtualThreadPerTaskExecutor()` as `taskExecutor` in `SimpleRabbitListenerContainerFactory`. Consumer idempotence: `processed_events` (Postgres unique) or Redis `SETNX`.
 
-**Dead-letter конфігурація:** кожна робоча черга (`q.sensor.events`, `q.payment.commands`, `q.notification.commands`) оголошується з аргументом `x-dead-letter-exchange: parkflow.dlx` — без цього повідомлення, що вичерпало ретраї, губиться, а не потрапляє в `*.dlq`.
+**Dead-letter configuration:** each work queue (`q.sensor.events`, `q.payment.commands`, `q.notification.commands`) is declared with the argument `x-dead-letter-exchange: parkflow.dlx` — without this, a message that has exhausted retries is lost, and does not get into `*.dlq`.
 
 ---
 
 ## 10. Reconciliation
 
-`@Scheduled` job (кожні 2–5 хв), для кожного Spot порівнює останній `SensorEvent` з активною `Reservation`:
+`@Scheduled` job (every 2–5 min), for each Spot compares the latest `SensorEvent` with the active `Reservation`:
 
-| Аномалія | Умова | Реакція |
+| Anomaly | Condition | Reaction |
 |---|---|---|
-| `OCCUPIED_WITHOUT_RESERVATION` | сенсор OCCUPIED, активної броні немає | `SpotAnomaly` + admin-сповіщення |
-| `RESERVED_BUT_EMPTY_TOO_LONG` | бронь активна, сенсор FREE довше grace-period (15 хв) | no-show: anomaly + опційно авто-expire |
-| `SENSOR_SILENT` | немає подій > X хв | anomaly, статус → `UNKNOWN`, сірий маркер |
+| `OCCUPIED_WITHOUT_RESERVATION` | sensor OCCUPIED, no active reservation | `SpotAnomaly` + admin-notification |
+| `RESERVED_BUT_EMPTY_TOO_LONG` | reservation active, sensor FREE longer grace-period (15 min) | no-show: anomaly + optional auto-expire |
+| `SENSOR_SILENT` | no events > X min | anomaly, status → `UNKNOWN`, gray marker |
 
 ---
 
-## 11. Redis-кешування
+## 11. Redis caching
 
-- `availability:{lotId}:{from}:{to}` → TTL 30–60с + активна інвалідація подіями `reservation.created/cancelled`, `spot.status.changed` (cache-aside)
-- `lots:geojson` → TTL + інвалідація на CRUD лотів
-- Навантажувальний тест (k6/JMeter) до/після кешу → графік latency в README
-
----
-
-## 12. Resilience (платіжний шлюз)
-
-- **Mock gateway:** окремий Spring Boot застосунок/профіль з chaos-конфігом (керований % 500/timeout).
-- **Resilience4j:** Retry (exponential backoff 200мс×2, max 5 спроб) → Circuit Breaker (sliding window 10, поріг 50%) → TimeLimiter. Виклики через `HttpClient`.
-- **RateLimiter** — той самий модуль, на публічному bbox-пошуку.
-- **Idempotency-Key** проброшується до шлюзу — retry безпечний.
-- **Компенсація:** вичерпання retry → `Payment.FAILED` → подія → `Reservation.Expired("payment_failed")` → місце звільняється.
+- `availability:{lotId}:{from}:{to}` → TTL 30–60s + active invalidation by `reservation.created/cancelled`, `spot.status.changed` events (cache-aside)
+- `lots:geojson` → TTL + invalidation on CRUD of lots
+- Load test (k6/JMeter) before/after cache → latency graph in README
 
 ---
 
-## 13. Спостережуваність
+## 12. Resilience (payment gateway)
 
-- Actuator + Prometheus (`/actuator/prometheus`) + Grafana дашборди (CPU, память, latency).
-- Micrometer Tracing + Zipkin — traceId проходить крізь REST-контролер → публікацію в RabbitMQ → консюмер на Virtual Thread → виклик платіжного шлюзу. Технічно складніша задача за трасування між синхронними сервісами — context propagation через message broker, а не через HTTP-заголовки.
-
----
-
-## 14. Стратегія тестування — дві фази
-
-### Фаза A: тести для кістяка (з M0, паралельно з написанням структури)
-
-Мета — тестова інфраструктура готова ще до того, як з'являється складна бізнес-логіка, щоб M2-M3 (race condition, черги) розроблялись одразу з надійною базою:
-
-- Базова конфігурація Testcontainers (Postgres + RabbitMQ) через `@ServiceConnection` (Spring Boot 3.1+ — сам чекає готовності контейнера, знімає типову проблему "RabbitMQ connection refused" при заскоку підключення раніше, ніж контейнер піднявся). Контейнери — **singleton/reuse на весь testsuite** (`.withReuse(true)` + `testcontainers.reuse.enable=true` у `~/.testcontainers.properties`), інакше кожен тест-клас піднімає контейнер по 30+ секунд.
-- Smoke-тест: контекст Spring піднімається, контейнери стартують, `/actuator/health` повертає `UP`.
-- Контрактні тести на скелет REST-ендпоінтів (`@WebMvcTest`) — правильні HTTP-статуси й форма відповіді ще до наповнення бізнес-логікою (TDD-стиль: спочатку контракт, потім реалізація).
-- Repository-тести (`@DataJpaTest` + Testcontainers) на щойно згенеровані Flyway-міграції — перевірка, що схема БД коректна, ще до бізнес-логіки над нею.
-
-### Фаза B: тести для готової функціональності (по мірі завершення кожного мілстоуна)
-
-- **M2 (бронювання):** race-тест 50 потоків через `ExecutorService`, тест на exhaustive `switch` переходів статусів (усі гілки), тест idempotency (два ідентичні запити → один результат + 409 на другий), перевірка запису в `ReservationAudit`.
-- **M3 (асинхронність):** інтеграційний тест "подія в чергу → консюмер обробив → запис у БД" (Testcontainers RabbitMQ), тест ідемпотентності консюмера (повторна доставка не дублює запис).
-- **M4 (reconciliation):** тести кожного типу `SpotAnomaly` окремо, тест graceful degradation (RabbitMQ/Postgres недоступні — мокуються через Testcontainers `stop()`).
-- **M5 (resilience):** тест Circuit Breaker (chaos-режим mock-шлюзу вмикає 100% відмов → coil відкривається), тест Retry (перша спроба падає, друга успішна), тест RateLimiter (перевищення ліміту → 429).
-- **M6 (GraphQL):** тести Query-резолверів, тест Subscription (публікація події → підписник отримує).
-- **M8 (security):** тести JWT (валідний/протермінований/підроблений токен), тести доступу за роллю (USER не може викликати admin-ендпоінти), тест regex-валідації номерного знаку.
-
-Такий поділ означає, що жоден мілстоун не залишається без тестового покриття "на потім" — фаза A гарантує інфраструктуру з першого дня, фаза B додається органічно разом із кожною новою функціональністю, а не одним великим "написати тести" мілстоуном наприкінці.
+- **Mock gateway:** separate Spring Boot application/profile with chaos-config (managed % 500/timeout).
+- **Resilience4j:** Retry (exponential backoff 200ms×2, max 5 attempts) → Circuit Breaker (sliding window 10, threshold 50%) → TimeLimiter. Calls via `HttpClient`.
+- **RateLimiter** — the same module, on public bbox-search.
+- **Idempotency-Key** is passed to the gateway — retry is safe.
+- **Compensation:** retry exhaustion → `Payment.FAILED` → event → `Reservation.Expired("payment_failed")` → place is freed.
 
 ---
 
-## 15. Мілстоуни
+## 13. Observability
 
-| # | Мілстоун | Зміст |
+- Actuator + Prometheus (`/actuator/prometheus`) + Grafana dashboards (CPU, memory, latency).
+- Micrometer Tracing + Zipkin — traceId passes through REST controller → publication in RabbitMQ → consumer on Virtual Thread → payment gateway call. Technically more difficult task than tracing between synchronous services — context propagation via message broker, not via HTTP headers.
+---
+
+## 14. Testing strategy — two phases
+
+### Phase A: tests for the backbone (with M0, in parallel with writing the structure)
+
+The goal is to have the test infrastructure ready before complex business logic appears, so that M2-M3 (race conditions, queues) can be developed immediately with a reliable base:
+
+- Basic configuration of Testcontainers (Postgres + RabbitMQ) via `@ServiceConnection` (Spring Boot 3.1+ — itself waits for the container to be ready, eliminates the typical problem "RabbitMQ connection refused" when the connection is triggered before the container has been started). Containers — **singleton/reuse for the entire testsuite** (`.withReuse(true)` + `testcontainers.reuse.enable=true` in `~/.testcontainers.properties`), otherwise each test class starts the container for 30+ seconds.
+- Smoke test: the Spring context starts, the containers start, `/actuator/health` returns `UP`.
+- Contract tests for the REST endpoint skeleton (`@WebMvcTest`) — correct HTTP statuses and response form even before filling with business logic (TDD style: first contract, then implementation).
+- Repository tests (`@DataJpaTest` + Testcontainers) for newly generated Flyway migrations — checking that the database schema is correct even before the business logic above it.
+
+### Phase B: tests for ready functionality (as each milestone is completed)
+
+- **M2 (reservation):** race test of 50 threads through `ExecutorService`, test for exhaustive `switch` of status transitions (all branches), idempotency test (two identical requests → one result + 409 on the second), check of the entry in `ReservationAudit`.
+- **M3 (asynchrony):** integration test "event in queue → consumer processed → record in DB" (Testcontainers RabbitMQ), consumer idempotence test (redelivery does not duplicate a record).
+- **M4 (reconciliation):** tests of each `SpotAnomaly` type separately, graceful degradation test (RabbitMQ/Postgres are not available — mocked via Testcontainers `stop()`).
+- **M5 (resilience):** Circuit Breaker test (chaos-mode of mock-gateway enables 100% failures → coil opens), Retry test (first attempt fails, second successful), RateLimiter test (limit exceeded → 429).
+- **M6 (GraphQL):** Query resolver tests, Subscription test (event publication → subscriber receives).
+- **M8 (security):** JWT tests (valid/expired/fake token), role-based access tests (USER cannot call admin endpoints), license plate regex validation test.
+
+This separation means that no milestone is left without test coverage "for later" - phase A guarantees the infrastructure from day one, phase B is added organically with each new functionality, and not one big "write tests" milestone at the end.
+
+---
+
+## 15. Milestones
+
+| # | Milestone | Table of Contents |
 |---|---|---|
-| M0 | Фундамент | Repo, Spring Boot 3/Java 21, docker-compose (Postgres+Redis+RabbitMQ), Flyway, GitHub Actions skeleton, базова Testcontainers-конфігурація (Фаза A тестів) |
-| M1 | Домен + CRUD | Сутності, міграції (`V1__extensions.sql` з `btree_gist` — заздалегідь, до появи exclusion constraint у M2), REST lots/spots, seed-дані (3 лоти × ~40 місць), repository-тести |
-| M2 | Бронювання | Exclusion constraint, idempotency-key, cancel, race-тест 50 потоків, sealed-статуси, ReservationAudit |
-| M3 | Асинхронність | RabbitMQ-топологія (з DLX-аргументами), sensor-emulator як **окремий модуль з власним Dockerfile від самого початку** (не рефакторинг з `@Scheduled` пізніше), ingestion + consumer з явним virtual-thread executor-ом |
-| M3.5 | Рання візуальна демонстрація | Vanilla JS + Leaflet, статична сторінка, живі маркери (polling або простий WebSocket), CORS-конфігурація для першого браузерного клієнта |
-| M4 | Reconciliation | Звірка сенсор↔бронь, SpotAnomaly, admin-ендпоінти, Graceful Degradation |
-| M5 | Платежі + сповіщення | Mock-gateway з chaos-режимом, Resilience4j (Retry/Circuit Breaker/RateLimiter), notification-worker (MailHog) |
-| M6 | GraphQL + Redis | Схема Query+Subscription, кеш availability, benchmark до/після |
-| M7 | Frontend-полірування (опційно) | Апгрейд до React + react-leaflet + GraphQL Subscription |
-| M8 | Security + якість | JWT, ролі, RFC 7807 ProblemDetail, regex-валідація |
-| M9a | DevOps: інфраструктура | Terraform-модулі (`vpc`, `cloud-run` або `gke`, `cloud-sql` — PostgreSQL, `memorystore` — Redis, `rabbitmq` — Compute Engine VM або CloudAMQP, `load-balancer`), `environments/dev`+`prod`, `terraform plan` у CI, домен+HTTPS |
-| M9b | DevOps: спостережуваність + демо | Prometheus/Grafana, Zipkin-трасування крізь чергу, k6 load-test, README, демо-GIF |
+| M0 | Foundation | Repo, Spring Boot 3/Java 21, docker-compose (Postgres+Redis+RabbitMQ), Flyway, GitHub Actions skeleton, basic Testcontainers configuration (Phase A tests) |
+| M1 | Domain + CRUD | Entities, migrations (`V1__extensions.sql` with `btree_gist` — in advance, before the exclusion constraint in M2), REST lots/spots, seed data (3 lots × ~40 spots), repository tests |
+| M2 | Reservation | Exclusion constraint, idempotency-key, cancel, race test 50 threads, sealed-statuses, ReservationAudit |
+| M3 | Asynchrony | RabbitMQ-topology (with DLX-arguments), sensor-emulator as **separate module with its own Dockerfile from the very beginning** (not refactoring with `@Scheduled` later), ingestion + consumer with explicit virtual-thread executor |
+| M3.5 | Early visual demo | Vanilla JS + Leaflet, static page, live tokens (polling or simple WebSocket), CORS-configuration for the first browser client |
+| M4 | Reconciliation | Sensor↔Armor Reconciliation, SpotAnomaly, Admin Endpoints, Graceful Degradation |
+| M5 | Payments + Notifications | Mock-gateway with chaos mode, Resilience4j (Retry/Circuit Breaker/RateLimiter), notification-worker (MailHog) |
+| M6 | GraphQL + Redis | Query+Subscription schema, availability cache, benchmark before/after |
+| M7 | Frontend polishing (optional) | Upgrade to React + react-leaflet + GraphQL Subscription |
+| M8 | Security + Quality | JWT, Roles, RFC 7807 ProblemDetail, Regex Validation |
+| M9a | DevOps: Infrastructure | Terraform modules (`vpc`, `cloud-run` or `gke`, `cloud-sql` — PostgreSQL, `memorystore` — Redis, `rabbitmq` — Compute Engine VM or CloudAMQP, `load-balancer`), `environments/dev`+`prod`, `terraform plan` in CI, domain+HTTPS |
+| M9b | DevOps: observability + demo | Prometheus/Grafana, Zipkin-trace through queue, k6 load-test, README, demo-GIF |
 
-Кожен мілстоун — окремий PR і git-тег (`v0.1`…`v1.0`).
+Each milestone — separate PR and git tag (`v0.1`…`v1.0`).
 
-**Примітка щодо CI для Terraform:** `terraform fmt -check` + `terraform plan` як окремий job у GitHub Actions додається в тому самому PR, що й перші Terraform-модулі, тобто в **M9a**, а не заздалегідь у M0 — раніше цього моменту Terraform-коду в репозиторії ще не існує, і job просто нічого не перевірятиме.
+**Note on CI for Terraform:** `terraform fmt -check` + `terraform plan` as a separate job in GitHub Actions is added in the same PR as the first Terraform modules, i.e. in **M9a**, and not beforehand in M0 — before this point, the Terraform code does not yet exist in the repository, and the job simply will not check anything.
 
 ---
 
-## 16. Шаблон README
+## 16. README Template
 
 ```markdown
 # ParkFlow
 
 ## 🚀 Live Demo
+
 ## 🛠️ Tech Stack
 ## 🏗️ Architecture
-[Mermaid-діаграма компонентів]
+[Mermaid Component Diagram]
 
 ## 🧪 Problems I Deliberately Solved
-1. Race condition on booking — драбина рішень
-2. Idempotency на подвійний сабміт
+1. Race condition on booking — solution ladder
+2. Idempotency on double submit
 3. Sealed classes + exhaustive switch
-4. CQRS-lite: REST для команд, GraphQL для запитів/подій
-5. Graceful degradation при падінні RabbitMQ/Postgres/сенсора
+4. CQRS-lite: REST for commands, GraphQL for queries/events
+5. Graceful degradation when RabbitMQ/Postgres/sensor crashes
 
 ## 📊 Benchmarks
 ## 🔧 Troubleshooting
 ## 🗺️ Consciously Deferred
-- PostGIS, Kubernetes, реальний платіжний провайдер, повноцінний React SPA
+- PostGIS, Kubernetes, real payment provider, full React SPA
 ## 📄 License
 ```
 
 ---
 
-## 17. Свідомо відкладено / поза скоупом
+## 17. Consciously Deferred / Out of Scope
 
-- **PostGIS** — bbox на lat/lng вистачає для MVP.
+- **PostGIS** — bbox on lat/lng is enough for MVP.
 - **Kubernetes.**
-- **Реальні платіжні провайдери** — тільки mock із chaos-режимом.
-- **Повноцінний React SPA з усіма екранами** — опційний M7; vanilla JS з M3.5 — прийнятний фінальний фронтенд.
-- **Chaos engineering за межами платіжного шлюзу** (slow query, memory pressure, network partition) — bonus-розділ README, не окремий мілстоун.
+- **Real payment providers** — only mock with chaos mode.
+- **Full React SPA with all screens** — optional M7; vanilla JS with M3.5 — acceptable final frontend.
+- **Chaos engineering outside the payment gateway** (slow query, memory pressure, network partition) — bonus README section, not a separate milestone.

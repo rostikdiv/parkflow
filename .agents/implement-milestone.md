@@ -1,19 +1,19 @@
 # implement-milestone.md
 
-Викликається як `/implement-milestone <номер, напр. M2>` в чаті агента.
+Called as `/implement-milestone <number, e.g. M2>` in the agent chat.
 
-## Інструкція для агента
+## Instructions for the agent
 
-1. Відкрий `docs/parkflow_final_plan.md`, знайди рядок відповідного мілстоуна в таблиці §15, і всі розділи плану, на які він посилається (наприклад M2 → §4.1, §4.2, §4.3, §5, §14 Фаза B).
-2. Згенеруй Plan Artifact за структурою з `GEMINI.md` (посилання на розділ, файли, тести Фаза A/B, out of scope).
-3. Зупинись і зачекай підтвердження Plan Artifact від користувача — не виконуй одразу.
-4. Після підтвердження — реалізуй, дотримуючись `AGENTS.md` (англійські коментарі, sealed-типи без default, посилання на план у коментарях до ключових рішень).
-5. Напиши тести одразу в межах цього ж кроку (не окремим наступним promt-ом) згідно з Фазою, зазначеною в плані для цього мілстоуна.
-6. Заверши структурованим блоком "Що зроблено / Технічне пояснення / Тести / Що перевірити вручну".
-7. Не переходь до наступного мілстоуна самостійно — зупинись і чекай нової команди.
+1. Open `docs/parkflow_final_plan.md`, find the relevant milestone line in the §15 table, and all plan sections it references (eg M2 → §4.1, §4.2, §4.3, §5, §14 Phase B).
+2. Generate the Plan Artifact according to the structure from `GEMINI.md` (links to the section, files, Phase A/B tests, out of scope).
+3. Stop and wait for confirmation of the Plan Artifact from the user - do not execute immediately.
+4. After confirmation — implement, following `AGENTS.md' (English comments, sealed-types without default, links to the plan in comments to key decisions).
+5. Write the tests immediately within the same step (not a separate next prompt) according to the Phase specified in the plan for this milestone.
+6. Finish with a structured block "What was done / Technical explanation / Tests / What to check manually".
+7. Do not go to the next milestone on your own - stop and wait for a new team.
 
-## Приклад виклику
+## Call example
 ```
 /implement-milestone M2
 ```
-Очікуваний результат: Plan Artifact з посиланням на §4.1 (Reservation, ReservationAudit), §4.2 (sealed ReservationStatus), §4.3 (exclusion constraint + race-тест), §5 (idempotency), §14 Фаза B — і список файлів для створення/зміни, перед будь-яким кодом.
+Expected output: Plan Artifact with reference to §4.1 (Reservation, ReservationAudit), §4.2 (sealed ReservationStatus), §4.3 (exclusion constraint + race-test), §5 (idempotency), §14 Phase B — and a list of files to create/change, before any code.

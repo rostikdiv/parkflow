@@ -1,18 +1,12 @@
-# Хід виконання: ParkFlow
+# Progress: ParkFlow
 
-## Реалізовано (M1 - M9b)
-- ✅ **M1 (Project Skeleton & Database)**: Згенеровано Spring Boot додаток. Налаштовано Flyway, Testcontainers (PostgreSQL, Redis, RabbitMQ), CI/CD GitHub Actions. Реалізовано базові сутності.
-- ✅ **M2 (Auth & Security)**: Налаштовано JWT-аутентифікацію, ролі (`ROLE_USER`, `ROLE_ADMIN`). Реалізовано `AuthController` та `SecurityConfig`.
-- ✅ **M3 (Inventory & GraphQL)**: Реалізовано домен паркомісць (`parking_lot`, `spot`). Додано GraphQL-схему для отримання доступності. Налаштовано кешування у Redis (анотації `@Cacheable`).
-- ✅ **M4 (Reservations & Payments)**: Створено логіку бронювання (CQRS). Додано PostgreSQL exclusion constraints (`no_overlapping_reservations`). Інтегровано фіктивний платіжний шлюз `PaymentWorker` та налаштовано оновлення статусу бронювання.
-- ✅ **M5 (Sensors & Real-time Anomalies)**: Реалізовано обробку подій сенсорів через RabbitMQ. Додано `ReconciliationService` для виявлення аномалій (зайнято без броні, не приїхав, відвал сенсора) та запис у `spot_anomaly`.
-- ✅ **M6 (Resilience & Webhooks)**: Інтегровано `Resilience4j` (Circuit Breaker) для викликів зовнішніх API платежів.
-- ✅ **M7 (Frontend Map & Integration)**: Створено веб-застосунок на React+Vite. Реалізовано інтерактивну мапу парковки (відображення вільних/зайнятих місць та аномалій). Додано WebSocket підписки (`urql`) для реального часу.
-- ✅ **M8 (Polish & E2E Testing)**: Допрацьовано адмін-панель, валідацію номерних знаків (Regex) та симулятор сенсорів.
-- ✅ **M9b (Observability & Monitoring)**: Налаштовано k6 для навантажувального тестування (10 VUs) і перевірки Circuit Breaker. Інтегровано Prometheus та Grafana з автоматичним provisioning дашбордів для JVM та Spring Boot. Інтегровано Zipkin (Micrometer Tracing) для відстеження розподілених запитів.
-
-## В процесі
-- ⏳ **M9a (Cloud & Infrastructure)**: Написання Terraform-скриптів для GCP (VPC, Cloud SQL, Memorystore, Cloud Run/GKE).
-
-## Наступні кроки
-- 🚀 Деплой системи в Google Cloud та фінальне тестування в хмарі.
+## Implemented (M1 - M9b)
+- ✅ **M1 (Project Skeleton & Database)**: Generated Spring Boot application. Configured Flyway, Testcontainers (PostgreSQL, Redis, RabbitMQ), CI/CD GitHub Actions. Implemented basic entities.
+- ✅ **M2 (Auth & Security)**: Configured JWT authentication, roles (`ROLE_USER`, `ROLE_ADMIN`). Implemented `AuthController` and `SecurityConfig`.
+- ✅ **M3 (Inventory & GraphQL)**: Implemented parking domain (`parking_lot`, `spot`). Added GraphQL schema to get availability. Configured caching in Redis (annotations `@Cacheable`).
+- ✅ **M4 (Reservations & Payments)**: Created reservation logic (CQRS). Added PostgreSQL exclusion constraints (`no_overlapping_reservations`). Integrated dummy payment gateway `PaymentWorker` and configured reservation status updates.
+- ✅ **M5 (Sensors & Real-time Anomalies)**: Implemented sensor event processing via RabbitMQ. Added `ReconciliationService` to detect anomalies (occupied without reservation, no-show, sensor dump) and write to `spot_anomaly`.
+- ✅ **M6 (Resilience & Webhooks)**: Integrated `Resilience4j` (Circuit Breaker) for calling external payment APIs.
+- ✅ **M7 (Frontend Map & Integration)**: Created a web application on React+Vite. Implemented an interactive parking map (displaying free/occupied spaces and anomalies). Added WebSocket subscriptions (`urql`) for real-time.
+- ✅ **M8 (Polish & E2E Testing)**: Admin panel, license plate validation (Regex) and sensor simulator have been improved.
+- ✅ **M9b (Observability & Monitoring)**: Configured k6 for load testing (10 VUs) and Circuit Breaker verification. Integrated Prometheus and Grafana with automatic provisioning of dashboards for JVM and Spring Boot. Integrated Zipkin (Micrometer Tracing) for tracking distributed queries.
