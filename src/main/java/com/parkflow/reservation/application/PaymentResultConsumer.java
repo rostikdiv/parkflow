@@ -25,13 +25,16 @@ public class PaymentResultConsumer {
     private final ReservationRepository reservationRepository;
     private final ReservationAuditRepository auditRepository;
     private final RabbitTemplate rabbitTemplate;
+    private final org.springframework.context.ApplicationEventPublisher applicationEventPublisher;
 
     public PaymentResultConsumer(ReservationRepository reservationRepository,
                                  ReservationAuditRepository auditRepository,
-                                 RabbitTemplate rabbitTemplate) {
+                                 RabbitTemplate rabbitTemplate,
+                                 org.springframework.context.ApplicationEventPublisher applicationEventPublisher) {
         this.reservationRepository = reservationRepository;
         this.auditRepository = auditRepository;
         this.rabbitTemplate = rabbitTemplate;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_PAYMENT_RESULTS)
@@ -57,6 +60,10 @@ public class PaymentResultConsumer {
                 result.success() ? "{\"reason\":\"Payment Succeeded\"}" : "{\"reason\":\"Payment Failed\"}"
         );
         auditRepository.save(audit);
+
+        applicationEventPublisher.publishEvent(
+            new com.parkflow.shared.domain.events.ReservationChangedEvent(reservation.getId(), reservation.getSpot().getId())
+        );
 
         if (result.success()) {
             NotificationCommand notifyCmd = new NotificationCommand(reservation.getUser().getId(), "CONFIRMED", reservation.getId());

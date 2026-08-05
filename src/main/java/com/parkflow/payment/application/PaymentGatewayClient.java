@@ -17,10 +17,13 @@ public class PaymentGatewayClient {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
+    private final String internalApiKey;
     private static final String GATEWAY_URL = "http://localhost:8080/api/internal/mock-gateway/pay";
 
-    public PaymentGatewayClient(ObjectMapper objectMapper) {
+    public PaymentGatewayClient(ObjectMapper objectMapper, 
+                                @org.springframework.beans.factory.annotation.Value("${internal.api.key:default-internal-key-change-me}") String internalApiKey) {
         this.objectMapper = objectMapper;
+        this.internalApiKey = internalApiKey;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(2))
                 .build();
@@ -34,6 +37,7 @@ public class PaymentGatewayClient {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(GATEWAY_URL))
                     .header("Content-Type", "application/json")
+                    .header("X-Internal-Api-Key", internalApiKey)
                     .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                     .build();
 
