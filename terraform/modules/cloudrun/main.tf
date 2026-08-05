@@ -43,7 +43,7 @@ resource "google_cloud_run_v2_service" "backend" {
     }
 
     containers {
-      image = "us-central1-docker.pkg.dev/${var.project_id}/parkflow-repo/parkflow-backend:latest"
+      image = "us-central1-docker.pkg.dev/${var.project_id}/parkflow-repo/parkflow-backend:efbce69c8be86c84c287fea6a2ac164ee46c5786"
 
       resources {
         limits = {
