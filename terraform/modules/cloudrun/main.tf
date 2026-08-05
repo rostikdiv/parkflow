@@ -47,6 +47,7 @@ resource "google_cloud_run_v2_service" "backend" {
 
       resources {
         limits = {
+          cpu    = "1000m"
           memory = "1024Mi"
         }
       }
@@ -131,7 +132,21 @@ resource "google_cloud_run_v2_service" "backend" {
         name  = "FORCE_RESTART"
         value = "2"
       }
+
+      env {
+        name  = "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE"
+        value = "2"
+      }
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      template[0].containers[0].image,
+      template[0].labels,
+      client,
+      client_version
+    ]
   }
 
   depends_on = [
