@@ -32,6 +32,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   // Filter state
   const [selectedLot, setSelectedLot] = useState<string>('ALL')
   const [anomalyStatus, setAnomalyStatus] = useState<'ALL' | 'UNRESOLVED' | 'RESOLVED'>('UNRESOLVED')
+  const [resStatus, setResStatus] = useState<'ALL' | 'ACTIVE_ONLY'>('ACTIVE_ONLY')
 
   // Time filter state
   const [fromIso, setFromIso] = useState(() => {
@@ -67,7 +68,9 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const finalReservations = filteredReservations.filter(r => {
     const rStart = new Date(r.startTime).getTime();
     const rEnd = new Date(r.endTime).getTime();
-    return rStart <= toTime && rEnd >= fromTime;
+    const matchesTime = rStart <= toTime && rEnd >= fromTime;
+    const matchesStatus = resStatus === 'ALL' ? true : (r.status === 'ACTIVE' || r.status === 'CONFIRMED' || r.status === 'PENDING');
+    return matchesTime && matchesStatus;
   });
 
   const finalAnomalies = filteredAnomalies.filter(a => {
@@ -281,6 +284,21 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                   { value: 'UNRESOLVED', label: 'Unresolved', icon: <AlertCircle size={14} /> },
                   { value: 'RESOLVED', label: 'Resolved', icon: <CheckCircle size={14} /> },
                   { value: 'ALL', label: 'All Statuses', icon: <Filter size={14} /> }
+                ]}
+              />
+            </div>
+          )}
+          {activeTab === 'reservations' && (
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
+                Reservation Status
+              </label>
+              <CustomSelect
+                value={resStatus}
+                onChange={(val) => setResStatus(val as any)}
+                options={[
+                  { value: 'ACTIVE_ONLY', label: 'Active & Confirmed', icon: <CheckCircle2 size={14} /> },
+                  { value: 'ALL', label: 'All (Inc. Expired/Cancelled)', icon: <Filter size={14} /> }
                 ]}
               />
             </div>
