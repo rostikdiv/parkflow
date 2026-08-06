@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { X, CalendarDays, AlertTriangle, ShieldCheck, CheckCircle2, ChevronDown, Building2, Filter, CheckCircle, AlertCircle, RefreshCw, Play, Square } from 'lucide-react'
+import { X, CalendarDays, AlertTriangle, ShieldCheck, CheckCircle2, ChevronDown, Building2, Filter, CheckCircle, AlertCircle, RefreshCw, Play, Square, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '../../lib/auth'
 import { TimeRangePicker } from './time-range-picker'
@@ -33,6 +33,9 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [selectedLot, setSelectedLot] = useState<string>('ALL')
   const [anomalyStatus, setAnomalyStatus] = useState<'ALL' | 'UNRESOLVED' | 'RESOLVED'>('UNRESOLVED')
   const [resStatus, setResStatus] = useState<'ALL' | 'ACTIVE_ONLY'>('ACTIVE_ONLY')
+  const [resSort, setResSort] = useState<'NEWEST' | 'OLDEST'>('NEWEST')
+  const [userSearch, setUserSearch] = useState('')
+  const [filtersExpanded, setFiltersExpanded] = useState(false)
 
   // Time filter state
   const [fromIso, setFromIso] = useState(() => {
@@ -70,7 +73,18 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
     const rEnd = new Date(r.endTime).getTime();
     const matchesTime = rStart <= toTime && rEnd >= fromTime;
     const matchesStatus = resStatus === 'ALL' ? true : (r.status === 'ACTIVE' || r.status === 'CONFIRMED' || r.status === 'PENDING');
-    return matchesTime && matchesStatus;
+    
+    const search = userSearch.toLowerCase().trim();
+    const matchesSearch = search === '' 
+      || r.userFullName?.toLowerCase().includes(search)
+      || r.userEmail?.toLowerCase().includes(search)
+      || r.licensePlate?.toLowerCase().includes(search);
+
+    return matchesTime && matchesStatus && matchesSearch;
+  }).sort((a, b) => {
+    const tA = new Date(a.startTime).getTime();
+    const tB = new Date(b.startTime).getTime();
+    return resSort === 'NEWEST' ? tB - tA : tA - tB;
   });
 
   const finalAnomalies = filteredAnomalies.filter(a => {
@@ -82,11 +96,10 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
     return matchesTime && matchesStatus;
   });
 
-  // Reset pagination when filters change
   useEffect(() => {
     setResPage(0)
     setAnomPage(0)
-  }, [selectedLot, fromIso, toIso, anomalyStatus])
+  }, [selectedLot, fromIso, toIso, anomalyStatus, userSearch, resStatus, resSort])
 
   // Paged data
   const pagedReservations = finalReservations.slice(resPage * size, (resPage + 1) * size);
@@ -254,8 +267,20 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 px-5 pb-2">
-          <div>
+        <div className="px-5 pb-2">
+          <button 
+            onClick={() => setFiltersExpanded(!filtersExpanded)}
+            className="flex items-center justify-between w-full py-2 px-3 mb-2 text-sm font-semibold rounded-lg border border-border bg-secondary/20 hover:bg-secondary/40 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <Filter size={16} /> Filters & Search
+            </span>
+            <ChevronDown size={16} className={cn("transition-transform duration-200 text-muted-foreground", filtersExpanded && "rotate-180")} />
+          </button>
+          
+          {filtersExpanded && (
+            <div className="flex flex-col gap-3 animate-in slide-in-from-top-2 fade-in duration-200 border border-border rounded-xl p-3 bg-card/50">
+              <div>
             <label htmlFor="lot-filter" className="block text-xs font-medium text-muted-foreground mb-1">
               Filter by Parking Lot
             </label>
@@ -301,14 +326,62 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                   { value: 'ALL', label: 'All (Inc. Expired/Cancelled)', icon: <Filter size={14} /> }
                 ]}
               />
+              
+              <div className="mt-3">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Sort By
+                </label>
+                <CustomSelect
+                  value={resSort}
+                  onChange={(val) => setResSort(val as any)}
+                  options={[
+                    { value: 'NEWEST', label: 'Start Time: Newest First', icon: <CalendarDays size={14} /> },
+                    { value: 'OLDEST', label: 'Start Time: Oldest First', icon: <CalendarDays size={14} /> }
+                  ]}
+                />
+              </div>
+              
+              <div className="mt-3">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Search by User or Plate
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                    <Search size={14} />
+                  </div>
+                  <input
+                    type="text"
+                    name="search-user-plate-admin-panel-field"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="Email, name or plate..."
+                    autoComplete="nope"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    className="w-full h-[38px] pl-9 pr-3 rounded-lg border border-border bg-background text-sm outline-none transition-colors focus:border-primary placeholder:text-muted-foreground/60"
+                  />
+                  {userSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setUserSearch('')}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
+          
           <TimeRangePicker 
-            fromIso={fromIso}
-            toIso={toIso}
-            onFromChange={setFromIso}
-            onToChange={setToIso}
-          />
+                fromIso={fromIso}
+                toIso={toIso}
+                onFromChange={setFromIso}
+                onToChange={setToIso}
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex gap-4 border-b border-border px-5 mt-2">
