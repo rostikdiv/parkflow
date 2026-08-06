@@ -22,14 +22,12 @@
 
 ---
 
-## 📸 Screenshots
+## 🎥 Demo
 
-<!-- TODO: add a demo GIF here — record with ShareX or LICEcap:
-     1. Open the map, see live spot updates from the sensor emulator
-     2. Book a spot, watch it turn red in real time
-     3. Open Admin Dashboard, show the reservation + anomaly tabs
-     Example: ![ParkFlow Demo](docs/demo.gif)
--->
+<video width="100%" autoplay loop muted playsinline>
+  <source src="./docs/demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 > 🎥 *Live demo available at [parkflow-udqb.vercel.app](https://parkflow-udqb.vercel.app)*
 
@@ -232,7 +230,7 @@ resilience4j.ratelimiter:
 
 Exceeding the limit returns `429 Too Many Requests`.
 
-### 8. Sensor Reconciliation Without ML
+### 8. Sensor Reconciliation
 A `@Scheduled` job (every 2–5 min) compares sensor events against active reservations and detects anomalies using pure deterministic business rules on time windows:
 
 | Anomaly Type | Condition |
@@ -284,12 +282,22 @@ npm run dev
 ```
 
 **Default credentials:**
-- Admin: `admin@parkflow.com` / `admin123`
+- Admin: `admin@parkflow.com` / `password`
 - User: `user@parkflow.com` / `password`
 
 > ⚠️ **Change all default passwords before any public deployment.**
 
-**Get a JWT token (curl):**
+**Get a JWT token:**
+
+*PowerShell (Windows):*
+```powershell
+$token = (Invoke-RestMethod -Method POST -Uri "http://localhost:8080/api/v1/auth/login" `
+  -ContentType "application/json" `
+  -Body '{"email":"admin@parkflow.com","password":"admin123"}').token
+$token
+```
+
+*bash/Linux/macOS:*
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -297,6 +305,14 @@ curl -s -X POST http://localhost:8080/api/v1/auth/login \
 ```
 
 **Make an authenticated request:**
+
+*PowerShell:*
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8080/api/v1/admin/reservations" `
+  -Headers @{ Authorization = "Bearer $token" }
+```
+
+*bash:*
 ```bash
 curl -H "Authorization: Bearer <your-token>" \
      http://localhost:8080/api/v1/admin/reservations
