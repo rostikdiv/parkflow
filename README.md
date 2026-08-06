@@ -24,7 +24,7 @@
 
 ## 🎥 Demo
 
-<video src="docs/demo.mp4" width="100%" autoplay loop muted playsinline></video>
+https://github.com/user-attachments/assets/abbdbaaa-f153-44af-a94f-2687571263ae
 
 > 🎥 *Live demo available at [parkflow-udqb.vercel.app](https://parkflow-udqb.vercel.app)*
 
