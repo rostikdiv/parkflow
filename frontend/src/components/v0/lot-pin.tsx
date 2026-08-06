@@ -26,7 +26,7 @@ export function LotPin({
     <button
       type="button"
       onClick={onSelect}
-      aria-label={`${lot.name}, ${free} spots free, $${lot.hourlyRate.toFixed(2)} per hour`}
+      aria-label={`${lot.name}, ${free} spots free, ₴${lot.hourlyRate.toFixed(2)} per hour`}
       className="absolute -translate-x-1/2 -translate-y-full focus:outline-none"
       style={{ left: `${lot.x}%`, top: `${lot.y}%` }}
     >
@@ -51,7 +51,7 @@ export function LotPin({
             {free} free
           </span>
           <span className={cn('text-[10px]', active ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
-            ${lot.hourlyRate.toFixed(2)}/hr
+            ₴{lot.hourlyRate.toFixed(2)}/hr
           </span>
         </span>
       </div>

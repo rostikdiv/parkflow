@@ -150,7 +150,7 @@ export function BookingDialog({
           {/* Total price */}
           <div className="mb-6 flex items-center justify-between rounded-2xl bg-primary/10 px-4 py-3.5">
             <span className="text-sm text-muted-foreground">Total</span>
-            <span className="text-2xl font-bold tabular-nums text-primary">${total}</span>
+            <span className="text-2xl font-bold tabular-nums text-primary">₴{total}</span>
           </div>
 
           {/* Actions */}
