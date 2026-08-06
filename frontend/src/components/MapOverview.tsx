@@ -12,6 +12,7 @@ const AVAILABILITY_QUERY = gql`
     availability(lotId: $lotId, from: $from, to: $to) {
       spotId
       isAvailable
+      bookedUntil
     }
   }
 `;
@@ -37,6 +38,7 @@ interface MapOverviewProps {
   lots: ApiParkingLot[];
   selectedLot: ApiParkingLot | null;
   onSelectLot: (lot: ApiParkingLot) => void;
+  lastBookedSpotId?: string | null;
 }
 
 function createCustomIcon(lot: ApiParkingLot, active: boolean, total: number, free: number) {
@@ -81,10 +83,12 @@ function LotMarker({
   lot,
   selectedLot,
   onSelectLot,
+  lastBookedSpotId,
 }: {
   lot: ApiParkingLot;
   selectedLot: ApiParkingLot | null;
   onSelectLot: (l: ApiParkingLot) => void;
+  lastBookedSpotId?: string | null;
 }) {
   const markerRef = useRef<L.Marker>(null);
 
@@ -95,7 +99,7 @@ function LotMarker({
     return { from: f.toISOString(), to: t.toISOString() };
   });
 
-  const [{ data }] = useQuery({
+  const [{ data }, executeQuery] = useQuery({
     query: AVAILABILITY_QUERY,
     variables: { lotId: lot.id, from, to },
   });
@@ -108,16 +112,31 @@ function LotMarker({
     }
   }, [data]);
 
+  useEffect(() => {
+    if (lastBookedSpotId) {
+      setLiveSpots(prev =>
+        prev.map(spot =>
+          spot.spotId === lastBookedSpotId ? { ...spot, isAvailable: false } : spot
+        )
+      );
+      executeQuery({ requestPolicy: 'network-only' });
+    }
+  }, [lastBookedSpotId, executeQuery]);
+
   useSubscription(
     { query: SPOT_STATUS_SUBSCRIPTION, variables: { lotId: lot.id } },
     (_, response) => {
       if (response.spotStatusChanged) {
         const event = response.spotStatusChanged as SpotStatusEvent;
-        const isAvail = event.status === 'FREE';
         setLiveSpots(prev =>
-          prev.map(spot =>
-            spot.spotId === event.spotId ? { ...spot, isAvailable: isAvail } : spot
-          )
+          prev.map(spot => {
+            if (spot.spotId === event.spotId) {
+              const isBooked = spot.bookedUntil && new Date(spot.bookedUntil) > new Date();
+              const isAvail = !isBooked && event.status === 'FREE';
+              return { ...spot, isAvailable: isAvail };
+            }
+            return spot;
+          })
         );
       }
       return response;
@@ -144,7 +163,7 @@ function LotMarker({
   );
 }
 
-export function MapOverview({ lots, selectedLot, onSelectLot }: MapOverviewProps) {
+export function MapOverview({ lots, selectedLot, onSelectLot, lastBookedSpotId }: MapOverviewProps) {
   const center: [number, number] = [50.4501, 30.5234]; // Kyiv
 
   // Only show ACTIVE parking lots on the map (filter out CLOSED ones)
@@ -171,6 +190,7 @@ export function MapOverview({ lots, selectedLot, onSelectLot }: MapOverviewProps
             lot={lot}
             selectedLot={selectedLot}
             onSelectLot={onSelectLot}
+            lastBookedSpotId={lastBookedSpotId}
           />
         ))}
         {selectedLot && (

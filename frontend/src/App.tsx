@@ -217,6 +217,7 @@ function AppContent() {
           lots={filteredLots}
           selectedLot={selectedLot}
           onSelectLot={setSelectedLot}
+          lastBookedSpotId={lastBookedSpotId}
         />
       </AppLayout>
 

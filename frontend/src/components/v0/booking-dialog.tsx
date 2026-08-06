@@ -54,10 +54,10 @@ export function BookingDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
+        <Dialog.Backdrop className="fixed inset-0 z-[2100] bg-black/60 backdrop-blur-sm transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
         <Dialog.Popup
           className={cn(
-            'fixed left-1/2 top-1/2 z-[95] w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2',
+            'fixed left-1/2 top-1/2 z-[2110] w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2',
             'rounded-3xl border border-border bg-popover p-6 text-popover-foreground elevation-5 outline-none',
             'transition-all duration-200',
             'data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
