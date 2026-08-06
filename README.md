@@ -24,7 +24,7 @@
 
 ## 🎥 Demo
 
-https://github.com/rostikdiv/parkflow/raw/main/docs/demo.mp4
+<video src="docs/demo.mp4" width="100%" autoplay loop muted playsinline></video>
 
 > 🎥 *Live demo available at [parkflow-udqb.vercel.app](https://parkflow-udqb.vercel.app)*
 
