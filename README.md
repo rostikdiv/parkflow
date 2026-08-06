@@ -24,10 +24,7 @@
 
 ## 🎥 Demo
 
-<video width="100%" autoplay loop muted playsinline>
-  <source src="./docs/demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+https://github.com/rostikdiv/parkflow/raw/main/docs/demo.mp4
 
 > 🎥 *Live demo available at [parkflow-udqb.vercel.app](https://parkflow-udqb.vercel.app)*
 
