@@ -1,7 +1,7 @@
 # Compute Engine Virtual Machine
 resource "google_compute_instance" "app_server" {
   name         = "parkflow-services-vm"
-  machine_type = "e2-micro" # Free Tier
+  machine_type = "e2-medium" # Upgraded from e2-micro to e2-medium for MilHub Kafka integration
   zone         = "${var.region}-a"
   
   # Use Google's Container-Optimized OS
@@ -35,7 +35,7 @@ resource "google_compute_firewall" "allow_internal_services" {
 
   allow {
     protocol = "tcp"
-    ports    = ["6379", "5672"]
+    ports    = ["6379", "5672", "9092"] # 6379 (Redis), 5672 (RabbitMQ), 9092 (Added for MilHub Kafka)
   }
 
   # Allow connections only from inside our VPC
