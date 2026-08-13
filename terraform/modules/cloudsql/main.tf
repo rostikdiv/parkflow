@@ -8,6 +8,11 @@ resource "google_sql_database_instance" "postgres_instance" {
     # The smallest tier available to save costs
     tier = "db-f1-micro"
 
+    database_flags {
+      name  = "max_connections"
+      value = "100"
+    }
+
     ip_configuration {
       ipv4_enabled    = false # NO public IP! Highly secure.
       private_network = var.vpc_network_id # Attach to our private VPC

@@ -1,8 +1,9 @@
 # Compute Engine Virtual Machine
 resource "google_compute_instance" "app_server" {
-  name         = "parkflow-services-vm"
-  machine_type = "e2-medium" # Upgraded from e2-micro to e2-medium for MilHub Kafka integration
-  zone         = "${var.region}-a"
+  name                      = "parkflow-services-vm"
+  machine_type              = "e2-medium" # 2 vCPU, 4GB RAM (Optimal balance for Kafka, Redis, and Cloud SQL)
+  zone                      = "${var.region}-a"
+  allow_stopping_for_update = true
   
   # Use Google's Container-Optimized OS
   boot_disk {
