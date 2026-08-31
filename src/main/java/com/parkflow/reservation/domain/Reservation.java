@@ -84,4 +84,36 @@ public class Reservation {
         this.createdAt = Instant.now();
         this.updatedAt = this.createdAt;
     }
+
+    // See plan §4.1: JPA entity equality based on surrogate key
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Reservation other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Return consistent hashCode across entity lifecycle states (transient and persistent)
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        // User and Spot objects excluded from direct toString to prevent LazyInitializationException and circular references
+        return "Reservation{" +
+                "id=" + id +
+                ", userId=" + (user != null ? user.getId() : null) +
+                ", spotId=" + (spot != null ? spot.getId() : null) +
+                ", licensePlate='" + licensePlate + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                ", status=" + status +
+                ", totalPrice=" + totalPrice +
+                ", idempotencyKey='" + idempotencyKey + '\'' +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                '}';
+    }
 }

@@ -60,4 +60,31 @@ public class ReservationAudit {
         this.metadata = metadata;
         this.createdAt = Instant.now();
     }
+
+    // See plan §4.1: JPA entity equality based on surrogate key
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ReservationAudit other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Return consistent hashCode across entity lifecycle states (transient and persistent)
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "ReservationAudit{" +
+                "id=" + id +
+                ", reservationId=" + reservationId +
+                ", fromStatus=" + fromStatus +
+                ", toStatus=" + toStatus +
+                ", triggeredBy='" + triggeredBy + '\'' +
+                ", metadata='" + metadata + '\'' +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }

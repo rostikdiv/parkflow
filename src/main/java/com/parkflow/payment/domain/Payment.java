@@ -72,4 +72,33 @@ public class Payment {
     public void incrementAttempts() {
         this.attempts++;
     }
+
+    // See plan §4.1: JPA entity equality based on surrogate key
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Payment other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Return consistent hashCode across entity lifecycle states (transient and persistent)
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Payment{" +
+                "id=" + id +
+                ", reservationId=" + reservationId +
+                ", amount=" + amount +
+                ", status=" + status +
+                ", externalRef='" + externalRef + '\'' +
+                ", attempts=" + attempts +
+                ", lastError='" + lastError + '\'' +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                '}';
+    }
 }

@@ -71,4 +71,33 @@ public class Spot {
         this.physicalStatus = newStatus;
         this.lastSensorUpdate = timestamp;
     }
+
+    // See plan §4.1: JPA entity equality based on surrogate key
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Spot other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Return consistent hashCode across entity lifecycle states (transient and persistent)
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        // ParkingLot object excluded to prevent LazyInitializationException and circular references
+        return "Spot{" +
+                "id=" + id +
+                ", code='" + code + '\'' +
+                ", type=" + type +
+                ", physicalStatus=" + physicalStatus +
+                ", lastSensorUpdate=" + lastSensorUpdate +
+                ", version=" + version +
+                ", layoutX=" + layoutX +
+                ", layoutY=" + layoutY +
+                '}';
+    }
 }

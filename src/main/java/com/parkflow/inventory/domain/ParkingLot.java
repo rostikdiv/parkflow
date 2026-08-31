@@ -87,4 +87,32 @@ public class ParkingLot {
     public void close() {
         this.status = ParkingLotStatus.CLOSED;
     }
+
+    // See plan §4.1: JPA entity equality based on surrogate key
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ParkingLot other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Return consistent hashCode across entity lifecycle states (transient and persistent)
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        // Spots collection excluded to prevent LazyInitializationException and circular references
+        return "ParkingLot{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", address='" + address + '\'' +
+                ", type=" + type +
+                ", hourlyRate=" + hourlyRate +
+                ", status=" + status +
+                ", timeZone='" + timeZone + '\'' +
+                '}';
+    }
 }

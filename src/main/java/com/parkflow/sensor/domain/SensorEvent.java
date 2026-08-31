@@ -63,4 +63,31 @@ public class SensorEvent {
         this.processedAt = Instant.now();
         this.rawPayload = rawPayload;
     }
+
+    // See plan §4.1: JPA entity equality based on surrogate key
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SensorEvent other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Return consistent hashCode across entity lifecycle states (transient and persistent)
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "SensorEvent{" +
+                "id=" + id +
+                ", externalEventId='" + externalEventId + '\'' +
+                ", spotId=" + spotId +
+                ", status=" + status +
+                ", sensorTimestamp=" + sensorTimestamp +
+                ", receivedAt=" + receivedAt +
+                ", processedAt=" + processedAt +
+                '}';
+    }
 }
