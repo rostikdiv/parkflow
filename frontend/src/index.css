@@ -252,7 +252,7 @@
   @apply m-0;
 }
 .leaflet-popup-close-button {
-  @apply text-muted-foreground hover:text-foreground !important;
+  @apply text-muted-foreground hover:text-foreground;
 }
 .leaflet-container {
   background-color: #09090b !important;
