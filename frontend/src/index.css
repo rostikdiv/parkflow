@@ -243,6 +243,17 @@
   background-color: var(--border);
   border-radius: 9999px;
 }
+/* Leaflet map popup overrides */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  @apply bg-card text-card-foreground shadow-lg border border-border;
+}
+.leaflet-popup-content {
+  @apply m-0;
+}
+.leaflet-popup-close-button {
+  @apply text-muted-foreground hover:text-foreground !important;
+}
 .leaflet-container {
   background-color: #09090b !important;
   font-family: 'Plus Jakarta Sans', sans-serif;

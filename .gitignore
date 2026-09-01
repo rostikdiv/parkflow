@@ -40,7 +40,9 @@ sensor-emulator/node_modules/
 .env.local
 .env.*
 !.env.example
+!frontend/.env.example
 !.env.production
+!frontend/.env.production
 application-local.yml
 application-local.yaml
 
@@ -55,4 +57,3 @@ terraform/.terraform/
 # Terraform Secrets
 secrets.tfvars
 .vercel
-.env*

@@ -264,9 +264,9 @@ H2 in-memory doesn't support `JSONB` — this is one of the direct arguments for
 git clone https://github.com/rostikdiv/parkflow.git
 cd parkflow
 
-# Copy and configure environment
-cp .env.example .env
-# Fill in JWT_SECRET (any 32+ char string for local dev)
+# Copy and configure environment variables
+cp .env.example .env                         # Backend & Docker environment
+cp frontend/.env.example frontend/.env       # Frontend environment (API & map keys)
 
 # Start infrastructure + backend
 docker-compose up -d --build
