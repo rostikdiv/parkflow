@@ -54,6 +54,22 @@ public class InventoryGraphController {
         return spotService.getAvailability(lotId, Instant.parse(from), Instant.parse(to));
     }
 
+    /**
+     * Batch mapping for ParkingLot.spots.
+     * Resolves spots for all parking lots in the GraphQL query using a single SQL query,
+     * completely eliminating the classic GraphQL N+1 problem.
+     */
+    @org.springframework.graphql.data.method.annotation.BatchMapping(typeName = "ParkingLot", field = "spots")
+    public Map<ParkingLotResponse, List<com.parkflow.inventory.api.dto.SpotResponse>> spots(List<ParkingLotResponse> lots) {
+        List<UUID> lotIds = lots.stream().map(ParkingLotResponse::id).toList();
+        Map<UUID, List<com.parkflow.inventory.api.dto.SpotResponse>> spotsByLot = spotService.getByParkingLotIds(lotIds);
+        Map<ParkingLotResponse, List<com.parkflow.inventory.api.dto.SpotResponse>> result = new java.util.HashMap<>();
+        for (ParkingLotResponse lot : lots) {
+            result.put(lot, spotsByLot.getOrDefault(lot.id(), List.of()));
+        }
+        return result;
+    }
+
     @EventListener
     public void onSpotStatusEvent(SpotStatusEvent event) {
         spotStatusSink.tryEmitNext(event);

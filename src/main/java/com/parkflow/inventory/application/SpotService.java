@@ -56,6 +56,25 @@ public class SpotService {
     }
 
     /**
+     * Batch retrieves spots for multiple parking lots in 1 SQL query.
+     * Prevents GraphQL N+1 problem when resolving spots across a list of parking lots.
+     */
+    public java.util.Map<UUID, List<SpotResponse>> getByParkingLotIds(java.util.Collection<UUID> parkingLotIds) {
+        List<Spot> spots = spotRepository.findByParkingLotIdIn(parkingLotIds);
+        java.util.Map<UUID, List<SpotResponse>> result = new java.util.HashMap<>();
+        for (UUID lotId : parkingLotIds) {
+            result.put(lotId, new java.util.ArrayList<>());
+        }
+        for (Spot spot : spots) {
+            List<SpotResponse> list = result.get(spot.getParkingLot().getId());
+            if (list != null) {
+                list.add(mapToResponse(spot));
+            }
+        }
+        return result;
+    }
+
+    /**
      * Retrieves availability of all spots in a parking lot for a given time range.
      * Cached in Redis.
      */
