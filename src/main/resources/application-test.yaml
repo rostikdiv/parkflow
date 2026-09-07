@@ -5,6 +5,12 @@ spring:
   flyway:
     enabled: true
     clean-disabled: false
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
+      direct:
+        auto-startup: false
 
 logging:
   level:
