@@ -34,11 +34,13 @@ public class Reservation {
     @Id
     private UUID id;
 
-    @ManyToOne
+    // FetchType.LAZY prevents automatic eager loading and N+1 queries when fetching reservation lists
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
 
-    @ManyToOne
+    // FetchType.LAZY prevents cascade loading of Spot and its ParkingLot unless explicitly requested
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY, optional = false)
     @JoinColumn(name = "spot_id", nullable = false)
     private Spot spot;
 

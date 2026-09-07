@@ -60,6 +60,8 @@ public class ParkingLot {
     @Column(nullable = false)
     private ParkingLotStatus status = ParkingLotStatus.ACTIVE;
 
+    // BatchSize loads child spots in batched IN clauses without causing HHH000104 in-memory pagination warnings
+    @org.hibernate.annotations.BatchSize(size = 50)
     @OneToMany(mappedBy = "parkingLot", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Spot> spots = new ArrayList<>();
 

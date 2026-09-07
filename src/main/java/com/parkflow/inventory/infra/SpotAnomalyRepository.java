@@ -9,6 +9,13 @@ import java.util.UUID;
 
 @Repository
 public interface SpotAnomalyRepository extends JpaRepository<SpotAnomaly, UUID> {
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"spot", "spot.parkingLot"})
     List<SpotAnomaly> findByResolvedAtIsNull();
+
+    @Override
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"spot", "spot.parkingLot"})
+    List<SpotAnomaly> findAll();
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"spot", "spot.parkingLot"})
     List<SpotAnomaly> findBySpotIdAndResolvedAtIsNull(UUID spotId);
 }

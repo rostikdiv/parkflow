@@ -14,12 +14,24 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ReservationRepository extends JpaRepository<Reservation, UUID> {
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"spot", "spot.parkingLot", "user"})
+    Optional<Reservation> findById(UUID id);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"spot", "spot.parkingLot", "user"})
     Optional<Reservation> findByIdempotencyKey(String idempotencyKey);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"spot", "spot.parkingLot", "user"})
     Page<Reservation> findByUserIdAndStatus(UUID userId, ReservationStatusType status, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"spot", "spot.parkingLot", "user"})
     Page<Reservation> findByUserId(UUID userId, Pageable pageable);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"spot", "spot.parkingLot", "user"})
     Page<Reservation> findByStatus(ReservationStatusType status, Pageable pageable);
-    // Inherited from JpaRepository: Page<Reservation> findAll(Pageable pageable);
+
+    @Override
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"spot", "spot.parkingLot", "user"})
+    Page<Reservation> findAll(Pageable pageable);
 
     @Query("SELECT r FROM Reservation r WHERE r.spot.id = :spotId " +
            "AND r.startTime <= :now AND r.endTime >= :now " +
