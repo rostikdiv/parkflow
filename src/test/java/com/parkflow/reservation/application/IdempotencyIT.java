@@ -1,5 +1,6 @@
 package com.parkflow.reservation.application;
 
+import com.parkflow.TestcontainersConfiguration;
 import com.parkflow.inventory.domain.Spot;
 import com.parkflow.inventory.infra.SpotRepository;
 import com.parkflow.reservation.api.dto.ReservationRequest;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
@@ -18,12 +20,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * Validates two-tier idempotency (Redis SETNX + DB unique constraint) per plan §5.
+ */
 @SpringBootTest
-@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
 @ActiveProfiles("test")
-@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
-@org.springframework.context.annotation.Import(com.parkflow.TestcontainersConfiguration.class)
-class IdempotencyTest {
+@Import(TestcontainersConfiguration.class)
+class IdempotencyIT {
 
     @Autowired
     private ReservationService reservationService;
@@ -53,12 +56,13 @@ class IdempotencyTest {
             testUser = userRepository.findById(UUID.fromString("00000000-0000-0000-0000-000000000001")).get();
         }
 
-        testSpot = spotRepository.findAll().get(1); // Use a different spot just in case
+        testSpot = spotRepository.findAll().get(1);
     }
 
     @Test
     void testIdempotentRequests() {
-        Instant from = Instant.now().plus(2, ChronoUnit.DAYS);
+        long offsetDays = java.util.concurrent.ThreadLocalRandom.current().nextLong(20000, 50000);
+        Instant from = Instant.now().plus(offsetDays, ChronoUnit.DAYS);
         Instant to = from.plus(1, ChronoUnit.HOURS);
         ReservationRequest req = new ReservationRequest(testSpot.getId(), from, to, "KA1234KA");
 

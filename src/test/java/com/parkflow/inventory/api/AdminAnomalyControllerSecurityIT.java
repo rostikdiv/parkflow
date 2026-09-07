@@ -1,15 +1,17 @@
 package com.parkflow.inventory.api;
 
+import com.parkflow.TestcontainersConfiguration;
 import com.parkflow.inventory.application.AnomalyService;
 import com.parkflow.security.domain.AppUser;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -20,17 +22,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
-@org.springframework.context.annotation.Import(com.parkflow.TestcontainersConfiguration.class)
-class AdminAnomalyControllerSecurityTest {
+@Import(TestcontainersConfiguration.class)
+class AdminAnomalyControllerSecurityIT {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private AnomalyService anomalyService;
 
     @Test

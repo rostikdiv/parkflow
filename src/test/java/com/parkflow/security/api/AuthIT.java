@@ -1,15 +1,16 @@
 package com.parkflow.security.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.parkflow.TestcontainersConfiguration;
 import com.parkflow.security.api.dto.AuthRequest;
 import com.parkflow.security.api.dto.RegisterRequest;
-import com.parkflow.security.domain.AppUser;
 import com.parkflow.security.infra.AppUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,12 +21,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
-@org.springframework.context.annotation.Import(com.parkflow.TestcontainersConfiguration.class)
-class AuthControllerTest {
+@Import(TestcontainersConfiguration.class)
+class AuthIT {
 
     @Autowired
     private MockMvc mockMvc;
@@ -38,7 +37,8 @@ class AuthControllerTest {
 
     @BeforeEach
     void setup() {
-        userRepository.deleteAll();
+        userRepository.findByEmail("newuser@example.com").ifPresent(userRepository::delete);
+        userRepository.findByEmail("newuser2@example.com").ifPresent(userRepository::delete);
     }
 
     @Test

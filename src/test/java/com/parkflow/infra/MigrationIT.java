@@ -1,9 +1,11 @@
 package com.parkflow.infra;
 
+import com.parkflow.TestcontainersConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import javax.sql.DataSource;
@@ -13,18 +15,14 @@ import java.sql.ResultSet;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Phase A: Validates that Flyway migrations (V1 and V2) apply correctly to a real Postgres instance.
- *
- * Locally on Windows, Docker Desktop 4.60+ CLI proxy is incompatible with docker-java,
- * so this test is SKIPPED (not failed) when Docker is unavailable. In CI (Linux), it runs.
+ * Phase A: Validates that Flyway migrations (including V9 performance indexes) apply correctly to a real Postgres instance.
  * See plan §14, Phase A, @DataJpaTest migration validation.
  */
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
-@org.springframework.context.annotation.Import(com.parkflow.TestcontainersConfiguration.class)
-class MigrationTest {
+@Import(TestcontainersConfiguration.class)
+class MigrationIT {
 
     @Autowired
     private DataSource dataSource;

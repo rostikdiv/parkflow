@@ -1,15 +1,17 @@
 package com.parkflow.sensor.application;
 
+import com.parkflow.TestcontainersConfiguration;
 import com.parkflow.inventory.domain.enums.PhysicalStatus;
 import com.parkflow.inventory.infra.SpotRepository;
 import com.parkflow.sensor.api.dto.SensorEventDto;
-import com.parkflow.shared.infra.RabbitMQConfig;
 import com.parkflow.sensor.infra.SensorEventRepository;
+import com.parkflow.shared.infra.RabbitMQConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
@@ -20,11 +22,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
-@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
 @ActiveProfiles("test")
-@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "CI", matches = "true")
-@org.springframework.context.annotation.Import(com.parkflow.TestcontainersConfiguration.class)
-class SensorEventConsumerTest {
+@Import(TestcontainersConfiguration.class)
+@org.springframework.test.context.TestPropertySource(properties = {
+    "spring.rabbitmq.listener.simple.auto-startup=true",
+    "spring.rabbitmq.listener.direct.auto-startup=true"
+})
+class SensorEventConsumerIT {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
@@ -38,6 +42,10 @@ class SensorEventConsumerTest {
     @BeforeEach
     void setup() {
         sensorEventRepository.deleteAll();
+        spotRepository.findById(UUID.fromString("00000000-0000-0000-0000-000000000001")).ifPresent(spot -> {
+            spot.updatePhysicalStatus(PhysicalStatus.UNKNOWN, null);
+            spotRepository.save(spot);
+        });
     }
 
     @Test

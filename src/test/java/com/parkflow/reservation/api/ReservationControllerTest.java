@@ -13,6 +13,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import com.parkflow.security.application.JwtService;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.math.BigDecimal;
@@ -49,9 +52,9 @@ class ReservationControllerTest {
         com.parkflow.security.domain.AppUser testUser = new com.parkflow.security.domain.AppUser(
                 UUID.fromString("11111111-1111-1111-1111-111111111111"), 
                 "test@test.com", "pass", "Test", "123", "USER");
-        org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth = 
-                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(testUser, null, testUser.getAuthorities());
-        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+        UsernamePasswordAuthenticationToken auth = 
+                new UsernamePasswordAuthenticationToken(testUser, null, testUser.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
     @Test
