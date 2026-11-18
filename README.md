@@ -8,25 +8,13 @@
 
 > A real-time parking reservation system with an interactive live map. Users see parking lots, check spot availability updated by simulated IoT sensors, and book a specific spot for a time range — all with WebSocket-based live updates.
 
----
-
-## 🚀 Live Demo
-
-| Service | URL |
-|---|---|
-| **Frontend** | https://parkflow-udqb.vercel.app |
-| **REST API (Swagger UI)** | https://parkflow-backend-258044247462.us-central1.run.app/swagger-ui.html |
-| **GraphiQL** | https://parkflow-backend-258044247462.us-central1.run.app/graphiql |
-
-> **Note on cold starts:** Backend runs on Google Cloud Run (scales to zero). First request may take ~5–10s to wake up. The frontend displays a graceful "warming up" screen during this time.
+> ☁️ **Deployment Note:** The GCP cloud environment (Cloud Run, Cloud SQL, Compute Engine) was provisioned via Terraform and verified in production, and is currently **paused** to avoid ongoing cloud costs. See the video walkthrough below or launch the full stack locally in one command via `docker-compose up`.
 
 ---
 
-## 🎥 Demo
+## 🎥 Video Demo
 
 https://github.com/user-attachments/assets/abbdbaaa-f153-44af-a94f-2687571263ae
-
-> 🎥 *Live demo available at [parkflow-udqb.vercel.app](https://parkflow-udqb.vercel.app)*
 
 ---
 
